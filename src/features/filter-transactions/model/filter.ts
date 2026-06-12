@@ -176,6 +176,42 @@ const isSpecificToDateTimeRange = (
   return transaction.datetime.toMillis() <= toDateTimeRange.toMillis();
 };
 
+// Expense and income category filters are combined with OR: when both are set
+// a transaction matches if it belongs to the chosen expense category OR the
+// chosen income category (matching both at once is impossible). When only one
+// is set it behaves as a plain category filter; when neither is set it passes.
+const matchesCategoryFilters = (
+  transaction: Transaction,
+  expenseCategories: ExpenseCategories,
+  incomeCategories: IncomeCategories,
+  expenseCategoryId?: ExpenseCategoryID,
+  incomeCategoryId?: IncomeCategoryID,
+): boolean => {
+  if (
+    typeof expenseCategoryId === "undefined" &&
+    typeof incomeCategoryId === "undefined"
+  ) {
+    return true;
+  }
+
+  const matchesExpense =
+    typeof expenseCategoryId !== "undefined" &&
+    isSpecificTransactionExpenseCategoryId(
+      transaction,
+      expenseCategories,
+      expenseCategoryId,
+    );
+  const matchesIncome =
+    typeof incomeCategoryId !== "undefined" &&
+    isSpecificTransactionIncomeCategoryId(
+      transaction,
+      incomeCategories,
+      incomeCategoryId,
+    );
+
+  return matchesExpense || matchesIncome;
+};
+
 export const filterTransactions = (
   transactions: Transaction[],
   filters: TransactionFilters,
@@ -192,14 +228,11 @@ export const filterTransactions = (
         accounts,
         filters.currencyId,
       ) &&
-      isSpecificTransactionExpenseCategoryId(
+      matchesCategoryFilters(
         transaction,
         expenseCategories,
-        filters.expenseCategoryId,
-      ) &&
-      isSpecificTransactionIncomeCategoryId(
-        transaction,
         incomeCategories,
+        filters.expenseCategoryId,
         filters.incomeCategoryId,
       ) &&
       isSpecificFromDateTimeRange(transaction, filters.fromDateTimeRange) &&

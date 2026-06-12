@@ -2,6 +2,10 @@ import { Header } from "@widgets/header";
 
 import { AppearanceSettingCardGroup } from "@features/appearance";
 import { BackupSettingCardGroup } from "@features/backup";
+import {
+  CurrencyCodesSettingCard,
+  CurrencyRatesSettingCard,
+} from "@features/currency-codes";
 import { NotificationsSettingCardGroup } from "@features/notifications";
 
 import {
@@ -19,6 +23,8 @@ export const SettingsPage = () => {
       <main className="flex flex-col gap-6">
         <SettingCardGroup title="Management">
           <CategoriesSettingCard />
+          <CurrencyCodesSettingCard />
+          <CurrencyRatesSettingCard />
         </SettingCardGroup>
         <BackupSettingCardGroup />
         <NotificationsSettingCardGroup />

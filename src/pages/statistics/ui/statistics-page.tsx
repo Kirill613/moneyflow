@@ -12,6 +12,7 @@ import {
   CategoriesStatisticsSection,
   CurrencyTotalCard,
   getCurrenciesStatistics,
+  netSameTitledCategories,
 } from "@features/statistics";
 
 import { useAccountsStore } from "@entities/account";
@@ -63,11 +64,15 @@ export const StatisticsPage = () => {
   );
   const statistics = useMemo(
     () =>
-      getCurrenciesStatistics(
-        accounts,
+      netSameTitledCategories(
+        getCurrenciesStatistics(
+          accounts,
+          expenseCategories,
+          incomeCategories,
+          filteredTransactions,
+        ),
         expenseCategories,
         incomeCategories,
-        filteredTransactions,
       ),
     [accounts, expenseCategories, incomeCategories, filteredTransactions],
   );

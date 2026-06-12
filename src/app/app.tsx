@@ -14,6 +14,7 @@ import { CreateExpenseCategoryPage } from "@pages/create-expense-category";
 import { CreateIncomePage } from "@pages/create-income";
 import { CreateIncomeCategoryPage } from "@pages/create-income-category";
 import { CreateTransferPage } from "@pages/create-transfer";
+import { CurrencyCodesPage } from "@pages/currency-codes";
 import { CurrencyOverviewPage } from "@pages/currency-overview";
 import { ExpenseCategoryOverviewPage } from "@pages/expense-category-overview";
 import { ExpenseOverviewPage } from "@pages/expense-overview";
@@ -24,6 +25,7 @@ import { RootLayoutPage } from "@pages/root-layout";
 import { SettingsPage } from "@pages/settings";
 import { StatisticsPage } from "@pages/statistics";
 import { TextSizeSettingsPage } from "@pages/text-size-settings";
+import { TotalStatisticsPage } from "@pages/total-statistics";
 import { TransactionsPage } from "@pages/transactions";
 import { TransferOverviewPage } from "@pages/transfer-overview";
 
@@ -43,6 +45,7 @@ const router = createBrowserRouter([
         children: [
           { path: "/transactions", element: <TransactionsPage /> },
           { path: "/statistics", element: <StatisticsPage /> },
+          { path: "/total-statistics", element: <TotalStatisticsPage /> },
           { path: "/balances", element: <BalancesPage /> },
           {
             path: "/settings",
@@ -117,6 +120,10 @@ const router = createBrowserRouter([
       {
         path: "/text-size-settings",
         element: <TextSizeSettingsPage />,
+      },
+      {
+        path: "/currency-codes",
+        element: <CurrencyCodesPage />,
       },
     ],
   },

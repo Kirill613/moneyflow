@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { DateTime } from "luxon";
@@ -49,12 +50,33 @@ const createBackup = async (): Promise<Backup> => {
   };
 };
 
+// On the web there are no native Filesystem/Share plugins — the Share API
+// ignores files and has no meaningful desktop implementation — so we trigger a
+// regular browser download instead.
+const downloadOnWeb = (filename: string, data: string) => {
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 export const exportBackup = async () => {
   const backup = await createBackup();
 
   const timestamp = DateTime.now().toMillis();
   const filename = `moneyflow-backup-v${backup.version}-${timestamp}.json`;
   const data = JSON.stringify(backup);
+
+  if (Capacitor.getPlatform() === "web") {
+    downloadOnWeb(filename, data);
+    return;
+  }
+
   const writeResult = await Filesystem.writeFile({
     path: filename,
     directory: Directory.Cache,

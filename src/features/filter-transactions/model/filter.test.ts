@@ -573,6 +573,58 @@ describe("filterTransactions", () => {
     ]);
   });
 
+  it("by expenseCategoryId OR incomeCategoryId when both are set", () => {
+    const actual = filterTransactions(
+      transactions,
+      { expenseCategoryId: "100", incomeCategoryId: "100" },
+      accounts,
+      expenseCategories,
+      incomeCategories,
+    );
+    assert.deepEqual(actual, [
+      {
+        type: "expense",
+        id: "1",
+        title: "",
+        amount: "0",
+        accountId: "10",
+        categoryId: "100",
+        createdAt: datetime,
+        datetime,
+      },
+      {
+        type: "expense",
+        id: "2",
+        title: "",
+        amount: "0",
+        accountId: "10",
+        categoryId: "100",
+        createdAt: datetime,
+        datetime,
+      },
+      {
+        type: "expense",
+        id: "5",
+        title: "",
+        amount: "0",
+        accountId: "12",
+        categoryId: "100",
+        createdAt: datetime,
+        datetime,
+      },
+      {
+        type: "income",
+        id: "3",
+        title: "",
+        amount: "0",
+        accountId: "10",
+        categoryId: "100",
+        createdAt: datetime,
+        datetime,
+      },
+    ]);
+  });
+
   it("by expense type and accountId", () => {
     const actual = filterTransactions(
       transactions,

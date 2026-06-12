@@ -7,6 +7,7 @@ import {
   useIncomeCategoriesStore,
 } from "@entities/category";
 import { useCurrenciesStore } from "@entities/currency";
+import { useCurrencyConversionStore } from "@entities/currency-conversion";
 import { useSettingsStore } from "@entities/settings";
 import {
   useExpensesStore,
@@ -42,6 +43,9 @@ export const useLoadState = () => {
   const { fetchSettings } = useSettingsStore((state) => ({
     fetchSettings: state.fetchSettings,
   }));
+  const { fetchCurrencyConversion } = useCurrencyConversionStore((state) => ({
+    fetchCurrencyConversion: state.fetchCurrencyConversion,
+  }));
 
   useEffect(() => {
     (async () => {
@@ -54,6 +58,7 @@ export const useLoadState = () => {
       await fetchIncomes();
       await fetchTransfers();
       await fetchSettings();
+      await fetchCurrencyConversion();
       await SplashScreen.hide();
     })();
   }, [
@@ -65,5 +70,6 @@ export const useLoadState = () => {
     fetchIncomes,
     fetchTransfers,
     fetchSettings,
+    fetchCurrencyConversion,
   ]);
 };

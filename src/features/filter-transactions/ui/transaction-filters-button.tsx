@@ -28,14 +28,28 @@ import { Button } from "@shared/ui/buttons";
 import { CalendarIcon, FilterIcon } from "@shared/ui/icons";
 import { Input } from "@shared/ui/inputs";
 import { ModalBottomSlide } from "@shared/ui/modals";
+import {
+  TabLikeRadioButton,
+  TabLikeRadioButtonGroup,
+} from "@shared/ui/radio-buttons";
 
 import { TransactionFilters } from "../model/filter";
+
+const QuickPeriod = {
+  all: "all",
+  thisMonth: "thisMonth",
+  lastMonth: "lastMonth",
+} as const;
+type QuickPeriod = (typeof QuickPeriod)[keyof typeof QuickPeriod];
 
 interface TransactionFiltersFormData {
   currencies: { currencyId: CurrencyID; value: boolean }[];
   accounts: { accountId: AccountID; value: boolean }[];
   expenseCategoryId: ExpenseCategoryID | null;
   incomeCategoryId: IncomeCategoryID | null;
+  quickPeriod: QuickPeriod;
+  fromMonth: string;
+  toMonth: string;
   fromDateTimeRange: string;
   toDateTimeRange: string;
 }
@@ -48,6 +62,39 @@ interface TransactionFiltersButtonProps {
   className?: string;
 }
 
+// Resolves the active date range from the time controls. "This month" / "Last
+// month" override the month range, which in turn overrides the day range.
+const resolveDateRange = (
+  data: TransactionFiltersFormData,
+): { from?: DateTime; to?: DateTime } => {
+  if (data.quickPeriod === QuickPeriod.thisMonth) {
+    const now = DateTime.now();
+    return { from: now.startOf("month"), to: now.endOf("month") };
+  }
+  if (data.quickPeriod === QuickPeriod.lastMonth) {
+    const lastMonth = DateTime.now().minus({ months: 1 });
+    return { from: lastMonth.startOf("month"), to: lastMonth.endOf("month") };
+  }
+  if (data.fromMonth || data.toMonth) {
+    return {
+      from: data.fromMonth
+        ? DateTime.fromFormat(data.fromMonth, "yyyy-MM").startOf("month")
+        : undefined,
+      to: data.toMonth
+        ? DateTime.fromFormat(data.toMonth, "yyyy-MM").endOf("month")
+        : undefined,
+    };
+  }
+  return {
+    from: data.fromDateTimeRange
+      ? DateTime.fromISO(data.fromDateTimeRange)
+      : undefined,
+    to: data.toDateTimeRange
+      ? DateTime.fromISO(data.toDateTimeRange)
+      : undefined,
+  };
+};
+
 const mapFormDataToFilters = (
   data: TransactionFiltersFormData,
 ): TransactionFilters => {
@@ -58,19 +105,14 @@ const mapFormDataToFilters = (
     .filter((a) => a.value)
     .map((a) => a.accountId);
 
-  const fromDateTimeRange = data.fromDateTimeRange;
-  const toDateTimeRange = data.toDateTimeRange;
+  const { from, to } = resolveDateRange(data);
   return {
     currencyId: currencyIds.length ? currencyIds : undefined,
     accountId: accountIds.length ? accountIds : undefined,
     expenseCategoryId: data.expenseCategoryId ?? undefined,
     incomeCategoryId: data.incomeCategoryId ?? undefined,
-    fromDateTimeRange: fromDateTimeRange
-      ? DateTime.fromISO(fromDateTimeRange)
-      : undefined,
-    toDateTimeRange: toDateTimeRange
-      ? DateTime.fromISO(toDateTimeRange)
-      : undefined,
+    fromDateTimeRange: from,
+    toDateTimeRange: to,
   };
 };
 
@@ -95,6 +137,9 @@ export const TransactionFiltersButton = ({
         accounts: [],
         expenseCategoryId: defaultValue?.expenseCategoryId ?? null,
         incomeCategoryId: defaultValue?.incomeCategoryId ?? null,
+        quickPeriod: QuickPeriod.all,
+        fromMonth: "",
+        toMonth: "",
         fromDateTimeRange:
           defaultValue?.fromDateTimeRange &&
           toLocalDatetime(defaultValue.fromDateTimeRange),
@@ -114,6 +159,12 @@ export const TransactionFiltersButton = ({
     });
 
   const formCurrencies = watch("currencies");
+  const quickPeriod = watch("quickPeriod");
+  const fromMonth = watch("fromMonth");
+  const toMonth = watch("toMonth");
+  const monthRangeDisabled = quickPeriod !== QuickPeriod.all;
+  const dayRangeDisabled =
+    quickPeriod !== QuickPeriod.all || Boolean(fromMonth || toMonth);
   // Hash of currency fields state for useEffect dependency, because array of currency fields as dependency causes recursive re-render
   const formCurrenciesHash = formCurrencies
     .map((c) => `${c.currencyId}${c.value}`)
@@ -181,8 +232,8 @@ export const TransactionFiltersButton = ({
         className="z-50"
         pageLayoutClassName="h-full"
       >
-        <div className="flex flex-col justify-between h-full pb-7 gap-4">
-          <div className="flex flex-col gap-6">
+        <div className="flex flex-col flex-1 min-h-0 pb-7 gap-4">
+          <div className="flex flex-col gap-6 flex-1 min-h-0 overflow-y-auto pe-1">
             <CurrencyMultiplePicker>
               {currencyFields.map((currencyField, index) => (
                 <Controller
@@ -245,12 +296,54 @@ export const TransactionFiltersButton = ({
                 />
               )}
             />
+            <Controller
+              control={control}
+              name="quickPeriod"
+              render={({ field: { value, onChange } }) => (
+                <TabLikeRadioButtonGroup
+                  label="Period"
+                  value={value}
+                  onChange={onChange}
+                >
+                  <TabLikeRadioButton value={QuickPeriod.all}>
+                    All time
+                  </TabLikeRadioButton>
+                  <TabLikeRadioButton value={QuickPeriod.thisMonth}>
+                    This month
+                  </TabLikeRadioButton>
+                  <TabLikeRadioButton value={QuickPeriod.lastMonth}>
+                    Last month
+                  </TabLikeRadioButton>
+                </TabLikeRadioButtonGroup>
+              )}
+            />
+            <Input
+              label="From month"
+              type="month"
+              leftAddon={<CalendarIcon size="sm" />}
+              inputBoxClassName="gap-3"
+              containerClassName={monthRangeDisabled ? "opacity-50" : ""}
+              disabled={monthRangeDisabled}
+              placeholder="From month"
+              {...register("fromMonth")}
+            />
+            <Input
+              label="To month"
+              type="month"
+              leftAddon={<CalendarIcon size="sm" />}
+              inputBoxClassName="gap-3"
+              containerClassName={monthRangeDisabled ? "opacity-50" : ""}
+              disabled={monthRangeDisabled}
+              placeholder="To month"
+              {...register("toMonth")}
+            />
             <Input
               label="From date time"
               type="datetime-local"
               leftAddon={<CalendarIcon size="sm" />}
               inputBoxClassName="gap-3"
-              className=""
+              containerClassName={dayRangeDisabled ? "opacity-50" : ""}
+              disabled={dayRangeDisabled}
               placeholder="From"
               {...register("fromDateTimeRange")}
             />
@@ -259,13 +352,15 @@ export const TransactionFiltersButton = ({
               type="datetime-local"
               leftAddon={<CalendarIcon size="sm" />}
               inputBoxClassName="gap-3"
+              containerClassName={dayRangeDisabled ? "opacity-50" : ""}
+              disabled={dayRangeDisabled}
               placeholder="To"
               {...register("toDateTimeRange")}
             />
           </div>
           <Button
             onClick={handleSubmit(onApply)}
-            className="w-[75%] self-center"
+            className="w-[75%] self-center shrink-0"
           >
             Apply
           </Button>

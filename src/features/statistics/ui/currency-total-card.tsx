@@ -54,7 +54,7 @@ export function CurrencyTotalCard({
         ) : (
           <TrendUpIcon className="min-w-max" size="md" />
         )}
-        <span className="text-xl font-extrabold">{formattedAmount}</span>
+        <span className="text-lg font-extrabold">{formattedAmount}</span>
       </div>
     </div>
   );
