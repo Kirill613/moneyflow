@@ -5,7 +5,6 @@ import { DateTime } from "luxon";
 
 import { accountsApi } from "@shared/api/accounts-api";
 import { currenciesApi } from "@shared/api/currencies-api";
-import { debtsApi } from "@shared/api/debts-api";
 import { expenseCategoriesApi } from "@shared/api/expense-categories-api";
 import { expensesApi } from "@shared/api/expenses-api";
 import { incomeCategoriesApi } from "@shared/api/income-categories-api";
@@ -40,7 +39,6 @@ const createBackup = async (): Promise<Backup> => {
   ]);
   return {
     version: version as 3,
-    debts: await debtsApi.getDebts(),
     expenses,
     incomes,
     transfers,

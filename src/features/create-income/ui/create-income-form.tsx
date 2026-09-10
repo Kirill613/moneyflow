@@ -8,6 +8,7 @@ import { twMerge } from "tailwind-merge";
 import { useAccountsStore } from "@entities/account";
 import { useIncomeCategoriesStore } from "@entities/category";
 import { useCurrenciesStore } from "@entities/currency";
+import { normalizeDebtPerson } from "@entities/debt";
 import { useIncomesStore } from "@entities/transaction";
 
 import { getNowLocalDatetime } from "@shared/lib/date";
@@ -23,13 +24,17 @@ import {
 } from "./create-income-form-fieldset";
 
 interface CreateIncomeFormProps
-  extends Pick<CreateIncomeFormFieldsetProps, "searchTransactionsByTitle"> {
+  extends Pick<
+    CreateIncomeFormFieldsetProps,
+    "searchTransactionsByTitle" | "debtPersonSuggestions"
+  > {
   className?: string;
 }
 
 export const CreateIncomeForm = ({
   className,
   searchTransactionsByTitle,
+  debtPersonSuggestions,
 }: CreateIncomeFormProps) => {
   const navigate = useNavigate();
   const { createIncome, incomes } = useIncomesStore((state) => ({
@@ -61,7 +66,8 @@ export const CreateIncomeForm = ({
   });
   const { handleSubmit, formState, watch } = methods;
 
-  const { title, categoryId, accountId, amount, datetime } = watch();
+  const { title, categoryId, accountId, amount, datetime, debtPerson } =
+    watch();
 
   useEffect(() => {
     const category =
@@ -86,6 +92,7 @@ export const CreateIncomeForm = ({
       accountId,
       amount,
       datetime,
+      debtPerson,
     });
   }, [
     title,
@@ -93,6 +100,7 @@ export const CreateIncomeForm = ({
     accountId,
     amount,
     datetime,
+    debtPerson,
     setCreateIncomeFormState,
   ]);
 
@@ -109,6 +117,7 @@ export const CreateIncomeForm = ({
       accountId: income.accountId,
       categoryId: income.categoryId,
       datetime: DateTime.fromISO(income.datetime),
+      debtPerson: normalizeDebtPerson(income.debtPerson) || undefined,
     });
     resetCreateIncomeFormState();
     navigate(-1);
@@ -128,6 +137,7 @@ export const CreateIncomeForm = ({
           accounts={{ order: accountsOrder, accounts }}
           currencies={currencies}
           searchTransactionsByTitle={searchTransactionsByTitle}
+          debtPersonSuggestions={debtPersonSuggestions}
         />
         <Button
           onClick={handleSubmit(onCreateIncome)}

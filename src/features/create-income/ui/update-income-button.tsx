@@ -3,6 +3,7 @@ import { useFormContext } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 
+import { normalizeDebtPerson } from "@entities/debt";
 import { IncomeID, useIncomesStore } from "@entities/transaction";
 
 import { CheckIcon } from "@shared/ui/icons";
@@ -37,6 +38,7 @@ export const UpdateIncomeButton = ({
       accountId: income.accountId,
       categoryId: income.categoryId,
       datetime: DateTime.fromISO(income.datetime),
+      debtPerson: normalizeDebtPerson(income.debtPerson) || undefined,
     });
     navigate(-1);
   };

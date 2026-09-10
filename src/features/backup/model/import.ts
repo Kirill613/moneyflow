@@ -3,7 +3,6 @@ import { Buffer } from "buffer";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { z } from "zod";
 
-import { debtsApi, debtsSchema } from "@shared/api/debts-api";
 import { migrator } from "@shared/api/migrations";
 import { DBVersion, versionApi } from "@shared/api/version-api";
 
@@ -51,11 +50,6 @@ export async function importBackup() {
   const backup = parseBackupJson(Buffer.from(data, "base64").toString());
   const backupWithVersion = validateBackup(backup);
   await backupImporters[backupWithVersion.version].import(backupWithVersion);
-  await debtsApi.setDebts(
-    "debts" in backupWithVersion
-      ? debtsSchema.parse(backupWithVersion.debts ?? [])
-      : [],
-  );
   await migrator.migrate(await versionApi.getVersion());
 }
 

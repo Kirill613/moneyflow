@@ -4,35 +4,19 @@ import { V3Backup, v3BackupConsistentSchema } from "./v3-backup.schema";
 
 const nowDate = Date.now();
 
-describe("debt backups", () => {
-  it("keeps old backups compatible and preserves new debt histories", () => {
+describe("debt person backups", () => {
+  it("keeps old backups without debtPerson compatible and preserves it on transactions", () => {
     const backup = generateBackup();
     expect(v3BackupConsistentSchema.safeParse(backup).success).toBe(true);
-    backup.debts = [
-      {
-        id: "036a70ef-a421-4cc5-ad6e-5a488cc68afd",
-        person: "Иван",
-        direction: "receivable",
-        amount: "100",
-        currency: { id: "BYN", symbol: "Br", precision: 2 },
-        dueDate: "",
-        note: "Тест",
-        createdAt: nowDate,
-        payments: [
-          {
-            id: "150d1d21-b4b4-43bd-8ee5-7655b23ae13b",
-            amount: "25",
-            date: "2026-09-10",
-          },
-        ],
-      },
-    ];
+    const expenseId = Object.keys(backup.expenses)[0];
+    const incomeId = Object.keys(backup.incomes)[0];
+    backup.expenses[expenseId].debtPerson = "Фама";
+    backup.incomes[incomeId].debtPerson = "Олег";
     const restored = v3BackupConsistentSchema.parse(
       JSON.parse(JSON.stringify(backup)),
     );
-    expect(restored.debts).toEqual(backup.debts);
-    backup.debts[0].payments[0].amount = "101";
-    expect(v3BackupConsistentSchema.safeParse(backup).success).toBe(false);
+    expect(restored.expenses[expenseId].debtPerson).toBe("Фама");
+    expect(restored.incomes[incomeId].debtPerson).toBe("Олег");
   });
 });
 

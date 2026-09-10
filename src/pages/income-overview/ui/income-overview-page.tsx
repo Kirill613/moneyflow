@@ -10,6 +10,7 @@ import {
   CreateIncomeFormData,
   UpdateIncomeButton,
 } from "@features/create-income";
+import { useDebtPersonSuggestions } from "@features/debts";
 import { DeleteIncomeButton } from "@features/delete-income";
 import { searchTransactionsByTitle } from "@features/search-transactions";
 
@@ -36,11 +37,13 @@ export const IncomeOverviewPage = () => {
   }));
 
   const income = getIncome(id);
+  const debtPersonSuggestions = useDebtPersonSuggestions();
 
   const methods = useForm<CreateIncomeFormData>({
     defaultValues: income && {
       ...income,
       datetime: toLocalDatetime(income.datetime),
+      debtPerson: income.debtPerson ?? "",
     },
     resolver: zodResolver(createIncomeFormSchema),
   });
@@ -64,6 +67,7 @@ export const IncomeOverviewPage = () => {
           accounts={{ accounts, order: accountsOrder }}
           currencies={currencies.currencies}
           searchTransactionsByTitle={searchTransactionsByTitle}
+          debtPersonSuggestions={debtPersonSuggestions}
         />
       </FormProvider>
     </PageLayout>

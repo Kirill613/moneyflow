@@ -8,6 +8,7 @@ export interface CreateExpense {
   categoryId: string;
   amount: string;
   datetime: DateTime;
+  debtPerson?: string;
 }
 
 export type UpdateExpense = CreateExpense;
@@ -27,6 +28,7 @@ export interface CreateIncome {
   categoryId: string;
   amount: string;
   datetime: DateTime;
+  debtPerson?: string;
 }
 
 export type UpdateIncome = CreateIncome;

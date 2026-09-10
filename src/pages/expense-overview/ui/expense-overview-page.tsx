@@ -10,6 +10,7 @@ import {
   CreateExpenseFormData,
   UpdateExpenseButton,
 } from "@features/create-expense";
+import { useDebtPersonSuggestions } from "@features/debts";
 import { DeleteExpenseButton } from "@features/delete-expense";
 import { searchTransactionsByTitle } from "@features/search-transactions";
 
@@ -36,11 +37,13 @@ export const ExpenseOverviewPage = () => {
   }));
 
   const expense = getExpense(id);
+  const debtPersonSuggestions = useDebtPersonSuggestions();
 
   const methods = useForm<CreateExpenseFormData>({
     defaultValues: expense && {
       ...expense,
       datetime: toLocalDatetime(expense.datetime),
+      debtPerson: expense.debtPerson ?? "",
     },
     resolver: zodResolver(createExpenseFormSchema),
   });
@@ -64,6 +67,7 @@ export const ExpenseOverviewPage = () => {
           accounts={{ accounts, order: accountsOrder }}
           currencies={currencies.currencies}
           searchTransactionsByTitle={searchTransactionsByTitle}
+          debtPersonSuggestions={debtPersonSuggestions}
         />
       </FormProvider>
     </PageLayout>

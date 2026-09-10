@@ -12,6 +12,7 @@ import {
   CurrencyID,
   createCurrencyAmountString,
 } from "@entities/currency";
+import { isDebtCategoryTitle } from "@entities/debt";
 import {
   ExpenseID,
   Expenses,
@@ -40,6 +41,7 @@ export interface CreateExpenseFormData {
   accountId: AccountID | null;
   amount: string;
   datetime: string;
+  debtPerson: string;
 }
 
 export interface CreateExpenseFormFieldsetProps
@@ -51,6 +53,7 @@ export interface CreateExpenseFormFieldsetProps
     accounts: Record<AccountID, CreateExpenseFormAccount>;
   };
   currencies: CurrenciesMap;
+  debtPersonSuggestions?: string[];
 }
 
 export const createExpenseFormSchema = z.object({
@@ -59,6 +62,7 @@ export const createExpenseFormSchema = z.object({
   accountId: z.string(),
   amount: z.string().regex(positiveDecimalRegex),
   datetime: z.string().nonempty(),
+  debtPerson: z.string(),
 });
 
 export const CreateExpenseFormFieldset = ({
@@ -67,11 +71,20 @@ export const CreateExpenseFormFieldset = ({
   accounts,
   currencies,
   searchTransactionsByTitle,
+  debtPersonSuggestions = [],
 }: CreateExpenseFormFieldsetProps) => {
-  const { control, register, watch, reset } =
+  const { control, register, watch, reset, setValue } =
     useFormContext<CreateExpenseFormData>();
 
-  const [accountId, title] = watch(["accountId", "title"]);
+  const [accountId, title, categoryId, debtPerson] = watch([
+    "accountId",
+    "title",
+    "categoryId",
+    "debtPerson",
+  ]);
+  const isDebtCategory =
+    categoryId !== null &&
+    isDebtCategoryTitle(categories[categoryId]?.title ?? "");
   const currencySymbol =
     accountId === null
       ? undefined
@@ -94,6 +107,7 @@ export const CreateExpenseFormFieldset = ({
       categoryId: expense.categoryId,
       accountId: expense.accountId,
       amount: expense.amount,
+      debtPerson: expense.debtPerson ?? "",
     });
   };
 
@@ -126,6 +140,35 @@ export const CreateExpenseFormFieldset = ({
           />
         )}
       />
+      {isDebtCategory && (
+        <div className="flex flex-col gap-2">
+          <Input
+            label="Человек (долг)"
+            placeholder="Имя"
+            {...register("debtPerson")}
+          />
+          {debtPersonSuggestions.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {debtPersonSuggestions.map((person) => (
+                <button
+                  key={person}
+                  type="button"
+                  className={`rounded-full px-3 py-1 text-sm transition-colors ${
+                    person === debtPerson
+                      ? "bg-lavender text-crust font-bold"
+                      : "bg-surface0 text-text active:bg-surface1"
+                  }`}
+                  onClick={() =>
+                    setValue("debtPerson", person, { shouldDirty: true })
+                  }
+                >
+                  {person}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <Controller
         control={control}
         name="accountId"

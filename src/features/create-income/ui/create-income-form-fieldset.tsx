@@ -12,6 +12,7 @@ import {
   CurrencyID,
   createCurrencyAmountString,
 } from "@entities/currency";
+import { isDebtCategoryTitle } from "@entities/debt";
 import {
   IncomeID,
   Incomes,
@@ -40,6 +41,7 @@ export interface CreateIncomeFormData {
   accountId: AccountID | null;
   amount: string;
   datetime: string;
+  debtPerson: string;
 }
 
 export interface CreateIncomeFormFieldsetProps
@@ -51,6 +53,7 @@ export interface CreateIncomeFormFieldsetProps
     accounts: Record<AccountID, CreateIncomeFormAccount>;
   };
   currencies: CurrenciesMap;
+  debtPersonSuggestions?: string[];
 }
 
 export const createIncomeFormSchema = z.object({
@@ -59,6 +62,7 @@ export const createIncomeFormSchema = z.object({
   accountId: z.string(),
   amount: z.string().regex(positiveDecimalRegex),
   datetime: z.string().nonempty(),
+  debtPerson: z.string(),
 });
 
 export const CreateIncomeFormFieldset = ({
@@ -67,11 +71,20 @@ export const CreateIncomeFormFieldset = ({
   accounts,
   currencies,
   searchTransactionsByTitle,
+  debtPersonSuggestions = [],
 }: CreateIncomeFormFieldsetProps) => {
-  const { control, register, watch, reset } =
+  const { control, register, watch, reset, setValue } =
     useFormContext<CreateIncomeFormData>();
 
-  const [accountId, title] = watch(["accountId", "title"]);
+  const [accountId, title, categoryId, debtPerson] = watch([
+    "accountId",
+    "title",
+    "categoryId",
+    "debtPerson",
+  ]);
+  const isDebtCategory =
+    categoryId !== null &&
+    isDebtCategoryTitle(categories[categoryId]?.title ?? "");
   const currencySymbol =
     accountId === null
       ? undefined
@@ -94,6 +107,7 @@ export const CreateIncomeFormFieldset = ({
       categoryId: income.categoryId,
       accountId: income.accountId,
       amount: income.amount,
+      debtPerson: income.debtPerson ?? "",
     });
   };
 
@@ -125,6 +139,35 @@ export const CreateIncomeFormFieldset = ({
           />
         )}
       />
+      {isDebtCategory && (
+        <div className="flex flex-col gap-2">
+          <Input
+            label="Человек (долг)"
+            placeholder="Имя"
+            {...register("debtPerson")}
+          />
+          {debtPersonSuggestions.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {debtPersonSuggestions.map((person) => (
+                <button
+                  key={person}
+                  type="button"
+                  className={`rounded-full px-3 py-1 text-sm transition-colors ${
+                    person === debtPerson
+                      ? "bg-lavender text-crust font-bold"
+                      : "bg-surface0 text-text active:bg-surface1"
+                  }`}
+                  onClick={() =>
+                    setValue("debtPerson", person, { shouldDirty: true })
+                  }
+                >
+                  {person}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <Controller
         control={control}
         name="accountId"

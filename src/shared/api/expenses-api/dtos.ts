@@ -6,6 +6,7 @@ export interface CreateExpenseDTO {
   categoryId: string;
   amount: string;
   datetime: number;
+  debtPerson?: string;
 }
 
 export type UpdateExpenseDTO = CreateExpenseDTO;

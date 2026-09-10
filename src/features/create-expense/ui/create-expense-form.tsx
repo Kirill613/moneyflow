@@ -8,6 +8,7 @@ import { twMerge } from "tailwind-merge";
 import { useAccountsStore } from "@entities/account";
 import { useExpenseCategoriesStore } from "@entities/category";
 import { useCurrenciesStore } from "@entities/currency";
+import { normalizeDebtPerson } from "@entities/debt";
 import { useExpensesStore } from "@entities/transaction";
 
 import { getNowLocalDatetime } from "@shared/lib/date";
@@ -23,13 +24,17 @@ import {
 } from "./create-expense-form-fieldset";
 
 interface CreateExpenseFormProps
-  extends Pick<CreateExpenseFormFieldsetProps, "searchTransactionsByTitle"> {
+  extends Pick<
+    CreateExpenseFormFieldsetProps,
+    "searchTransactionsByTitle" | "debtPersonSuggestions"
+  > {
   className?: string;
 }
 
 export const CreateExpenseForm = ({
   className,
   searchTransactionsByTitle,
+  debtPersonSuggestions,
 }: CreateExpenseFormProps) => {
   const navigate = useNavigate();
   const { createExpense, expenses } = useExpensesStore((state) => ({
@@ -61,7 +66,8 @@ export const CreateExpenseForm = ({
   });
   const { handleSubmit, formState, watch } = methods;
 
-  const { title, categoryId, accountId, amount, datetime } = watch();
+  const { title, categoryId, accountId, amount, datetime, debtPerson } =
+    watch();
 
   useEffect(() => {
     const category =
@@ -86,6 +92,7 @@ export const CreateExpenseForm = ({
       accountId,
       amount,
       datetime,
+      debtPerson,
     });
   }, [
     title,
@@ -93,6 +100,7 @@ export const CreateExpenseForm = ({
     accountId,
     amount,
     datetime,
+    debtPerson,
     setCreateExpenseFormState,
   ]);
 
@@ -109,6 +117,7 @@ export const CreateExpenseForm = ({
       accountId: expense.accountId,
       categoryId: expense.categoryId,
       datetime: DateTime.fromISO(expense.datetime),
+      debtPerson: normalizeDebtPerson(expense.debtPerson) || undefined,
     });
     resetCreateExpenseFormState();
     navigate(-1);
@@ -128,6 +137,7 @@ export const CreateExpenseForm = ({
           accounts={{ order: accountsOrder, accounts }}
           currencies={currencies}
           searchTransactionsByTitle={searchTransactionsByTitle}
+          debtPersonSuggestions={debtPersonSuggestions}
         />
         <Button
           onClick={handleSubmit(onCreateExpense)}

@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { debtsSchema } from "@shared/api/debts-api";
 import { isUniqueArray } from "@shared/lib/itertools";
 import { decimalRegex, positiveDecimalRegex } from "@shared/lib/regex";
 
@@ -69,6 +68,7 @@ const v3ExpenseSchema = z.object({
   amount: z.string().regex(positiveDecimalRegex),
   datetime: z.number().int().positive(),
   createdAt: z.number().int().positive(),
+  debtPerson: z.string().optional(),
 });
 
 const v3IncomeCategorySchema = z.object({
@@ -86,6 +86,7 @@ const v3IncomeSchema = z.object({
   amount: z.string().regex(positiveDecimalRegex),
   datetime: z.number().int().positive(),
   createdAt: z.number().int().positive(),
+  debtPerson: z.string().optional(),
 });
 
 const v3TransferAccount = z.object({
@@ -137,7 +138,6 @@ const v3BackupSchema = z.object({
   incomes: z.record(z.string().uuid(), v3IncomeSchema),
   transfers: z.record(z.string().uuid(), v3TransferSchema),
   settings: v3SettingsSchema,
-  debts: debtsSchema.optional(),
 });
 
 export const v3BackupConsistentSchema = v3BackupSchema.refine(
