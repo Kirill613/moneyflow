@@ -16,6 +16,7 @@ import { CreateIncomeCategoryPage } from "@pages/create-income-category";
 import { CreateTransferPage } from "@pages/create-transfer";
 import { CurrencyCodesPage } from "@pages/currency-codes";
 import { CurrencyOverviewPage } from "@pages/currency-overview";
+import { DebtsPage } from "@pages/debts";
 import { ExpenseCategoryOverviewPage } from "@pages/expense-category-overview";
 import { ExpenseOverviewPage } from "@pages/expense-overview";
 import { IncomeCategoryOverviewPage } from "@pages/income-category-overview";
@@ -47,6 +48,7 @@ const router = createBrowserRouter([
           { path: "/statistics", element: <StatisticsPage /> },
           { path: "/total-statistics", element: <TotalStatisticsPage /> },
           { path: "/balances", element: <BalancesPage /> },
+          { path: "/debts", element: <DebtsPage /> },
           {
             path: "/settings",
             element: <SettingsPage />,

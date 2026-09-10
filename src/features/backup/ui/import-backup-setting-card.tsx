@@ -6,6 +6,7 @@ import {
   useIncomeCategoriesStore,
 } from "@entities/category";
 import { useCurrenciesStore } from "@entities/currency";
+import { useDebtsStore } from "@entities/debt";
 import { SettingCard, useSettingsStore } from "@entities/settings";
 import {
   useExpensesStore,
@@ -63,6 +64,7 @@ export const ImportBackupSettingCard = () => {
       throw err;
     }
     await fetchCurrencies();
+    await useDebtsStore.getState().fetchDebts();
     await fetchAccounts();
     await fetchExpenseCategories();
     await fetchIncomeCategories();

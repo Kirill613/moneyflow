@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DateTime } from "luxon";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
@@ -31,6 +31,7 @@ export const CreateTransferForm = ({
   searchTransactionsByTitle,
 }: CreateTransferFormProps) => {
   const navigate = useNavigate();
+  const [error, setError] = useState("");
   const { createTransfer, transfers } = useTransfersStore((state) => ({
     transfers: state.transfers,
     createTransfer: state.createTransfer,
@@ -111,25 +112,31 @@ export const CreateTransferForm = ({
       throw new Error("Impossible toAccountId on transfer creation");
     }
 
-    await createTransfer({
-      title: transfer.title,
-      fromAccount: {
-        accountId: transfer.fromAccountId,
-        amount: transfer.fromAccountAmount,
-      },
-      toAccount: {
-        accountId: transfer.toAccountId,
-        amount: transfer.toAccountAmount,
-      },
-      datetime: DateTime.fromISO(transfer.datetime),
-    });
-    resetCreateTransferFormState();
-    navigate(-1);
+    setError("");
+    try {
+      await createTransfer({
+        title: transfer.title,
+        fromAccount: {
+          accountId: transfer.fromAccountId,
+          amount: transfer.fromAccountAmount,
+        },
+        toAccount: {
+          accountId: transfer.toAccountId,
+          amount: transfer.toAccountAmount,
+        },
+        datetime: DateTime.fromISO(transfer.datetime),
+      });
+      resetCreateTransferFormState();
+      navigate(-1);
+    } catch {
+      setError("Не удалось сохранить перевод. Повторите попытку.");
+    }
   };
 
   return (
     <FormProvider {...methods}>
       <form
+        onSubmit={handleSubmit(onCreateTransfer)}
         className={twMerge(
           "flex flex-col justify-between gap-8 pb-7",
           className,
@@ -141,12 +148,17 @@ export const CreateTransferForm = ({
           currencies={currencies}
           searchTransactionsByTitle={searchTransactionsByTitle}
         />
+        {error && (
+          <p role="alert" className="text-red">
+            {error}
+          </p>
+        )}
         <Button
-          onClick={handleSubmit(onCreateTransfer)}
+          type="submit"
           className="w-[75%] self-center"
-          disabled={!formState.isValid}
+          disabled={!formState.isValid || formState.isSubmitting}
         >
-          Confirm
+          {formState.isSubmitting ? "Сохранение…" : "Перевести"}
         </Button>
       </form>
     </FormProvider>

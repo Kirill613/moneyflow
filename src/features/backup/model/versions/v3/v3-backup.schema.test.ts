@@ -4,6 +4,38 @@ import { V3Backup, v3BackupConsistentSchema } from "./v3-backup.schema";
 
 const nowDate = Date.now();
 
+describe("debt backups", () => {
+  it("keeps old backups compatible and preserves new debt histories", () => {
+    const backup = generateBackup();
+    expect(v3BackupConsistentSchema.safeParse(backup).success).toBe(true);
+    backup.debts = [
+      {
+        id: "036a70ef-a421-4cc5-ad6e-5a488cc68afd",
+        person: "Иван",
+        direction: "receivable",
+        amount: "100",
+        currency: { id: "BYN", symbol: "Br", precision: 2 },
+        dueDate: "",
+        note: "Тест",
+        createdAt: nowDate,
+        payments: [
+          {
+            id: "150d1d21-b4b4-43bd-8ee5-7655b23ae13b",
+            amount: "25",
+            date: "2026-09-10",
+          },
+        ],
+      },
+    ];
+    const restored = v3BackupConsistentSchema.parse(
+      JSON.parse(JSON.stringify(backup)),
+    );
+    expect(restored.debts).toEqual(backup.debts);
+    backup.debts[0].payments[0].amount = "101";
+    expect(v3BackupConsistentSchema.safeParse(backup).success).toBe(false);
+  });
+});
+
 const currencyId1 = "f431410e-a274-4937-868e-a65c966365f3";
 const currencyId2 = "ab8ffe29-9cc7-4f37-8ad8-01e2e0224a26";
 const accountId1 = "87fbf3b4-1a13-4cae-a482-5e3e795a6404";
