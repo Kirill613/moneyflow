@@ -4,7 +4,11 @@ import { useState } from "react";
 
 import { Header } from "@widgets/header";
 
-import { useDebtTransactions } from "@features/debts";
+import {
+  useDebtPersonCandidates,
+  useDebtTransactions,
+  useFillDebtPersons,
+} from "@features/debts";
 
 import {
   createCurrencyAmountString,
@@ -20,9 +24,21 @@ export const DebtsPage = () => {
     currencies: { currencies },
   } = useCurrenciesStore();
   const transactions = useDebtTransactions();
+  const candidates = useDebtPersonCandidates();
+  const fillDebtPersons = useFillDebtPersons();
   const [expandedPerson, setExpandedPerson] = useState<string | null>(null);
+  const [filling, setFilling] = useState(false);
 
   const debts = computeDebts(transactions);
+
+  const onFillDebtPersons = async () => {
+    setFilling(true);
+    try {
+      await fillDebtPersons(candidates);
+    } finally {
+      setFilling(false);
+    }
+  };
 
   const formatAmount = (currencyId: string, amount: string) => {
     const currency = currencies[currencyId];
@@ -147,6 +163,25 @@ export const DebtsPage = () => {
         словом «долг» и укажите человека. Расход — вы дали деньги, доход — вам
         вернули или вы взяли.
       </p>
+      {candidates.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            className="rounded bg-lavender text-crust font-bold text-center p-3 disabled:opacity-50"
+            disabled={filling}
+            onClick={onFillDebtPersons}
+          >
+            {filling
+              ? "Проставляю имена…"
+              : `Проставить имена из старых записей (${candidates.length})`}
+          </button>
+          <p className="text-xs text-subtext0">
+            Найдёт старые транзакции долговых категорий, где имя читается из
+            названия («Дать долг Рома» → Рома), проставит человека и учтёт их в
+            балансе. Записи без имени в названии не изменятся.
+          </p>
+        </div>
+      )}
       {Object.keys(totals.receivable).length > 0 && (
         <div className="rounded bg-surface0 p-4">
           <p className="text-sm text-subtext0">Мне должны</p>

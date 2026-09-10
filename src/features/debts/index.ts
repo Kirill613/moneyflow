@@ -1,1 +1,7 @@
-export { useDebtPersonSuggestions, useDebtTransactions } from "./model/hooks";
+export {
+  useDebtPersonCandidates,
+  useDebtPersonSuggestions,
+  useDebtTransactions,
+  useFillDebtPersons,
+} from "./model/hooks";
+export type { DebtPersonCandidate } from "./model/hooks";

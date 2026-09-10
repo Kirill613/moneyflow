@@ -1,5 +1,6 @@
 export {
   computeDebts,
+  extractDebtPersonFromTitle,
   extractDebtPersonsFromTitles,
   isDebtCategoryTitle,
   normalizeDebtPerson,

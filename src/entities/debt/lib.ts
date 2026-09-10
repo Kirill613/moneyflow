@@ -52,6 +52,11 @@ export const extractDebtPersonsFromTitles = (titles: string[]) => {
   return [...persons.values()];
 };
 
+export const extractDebtPersonFromTitle = (title: string): string | null => {
+  const persons = extractDebtPersonsFromTitles([title]);
+  return persons.length === 1 ? persons[0] : null;
+};
+
 export interface DebtTransaction {
   id: string;
   kind: "expense" | "income";

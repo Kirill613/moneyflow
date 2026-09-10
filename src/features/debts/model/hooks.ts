@@ -5,6 +5,7 @@ import {
 } from "@entities/category";
 import {
   DebtTransaction,
+  extractDebtPersonFromTitle,
   extractDebtPersonsFromTitles,
   isDebtCategoryTitle,
   normalizeDebtPerson,
@@ -51,6 +52,85 @@ export const useDebtPersonSuggestions = (): string[] => {
   extractDebtPersonsFromTitles(debtCategoryTitles).forEach(addPerson);
 
   return [...persons.values()];
+};
+
+export interface DebtPersonCandidate {
+  kind: "expense" | "income";
+  id: string;
+  person: string;
+}
+
+export const useDebtPersonCandidates = (): DebtPersonCandidate[] => {
+  const { expenses } = useExpensesStore((state) => ({
+    expenses: state.expenses,
+  }));
+  const { incomes } = useIncomesStore((state) => ({
+    incomes: state.incomes,
+  }));
+  const { expenseCategories } = useExpenseCategoriesStore();
+  const { incomeCategories } = useIncomeCategoriesStore();
+
+  const candidates: DebtPersonCandidate[] = [];
+  for (const expense of Object.values(expenses)) {
+    if (expense.debtPerson) continue;
+    if (
+      !isDebtCategoryTitle(expenseCategories[expense.categoryId]?.title ?? "")
+    )
+      continue;
+    const person = extractDebtPersonFromTitle(expense.title);
+    if (person !== null) {
+      candidates.push({ kind: "expense", id: expense.id, person });
+    }
+  }
+  for (const income of Object.values(incomes)) {
+    if (income.debtPerson) continue;
+    if (!isDebtCategoryTitle(incomeCategories[income.categoryId]?.title ?? ""))
+      continue;
+    const person = extractDebtPersonFromTitle(income.title);
+    if (person !== null) {
+      candidates.push({ kind: "income", id: income.id, person });
+    }
+  }
+  return candidates;
+};
+
+export const useFillDebtPersons = () => {
+  const { expenses, updateExpense } = useExpensesStore((state) => ({
+    expenses: state.expenses,
+    updateExpense: state.updateExpense,
+  }));
+  const { incomes, updateIncome } = useIncomesStore((state) => ({
+    incomes: state.incomes,
+    updateIncome: state.updateIncome,
+  }));
+
+  return async (candidates: DebtPersonCandidate[]) => {
+    for (const candidate of candidates) {
+      if (candidate.kind === "expense") {
+        const expense = expenses[candidate.id];
+        if (!expense) continue;
+        await updateExpense(candidate.id, {
+          title: expense.title,
+          accountId: expense.accountId,
+          categoryId: expense.categoryId,
+          amount: expense.amount,
+          datetime: expense.datetime,
+          debtPerson: candidate.person,
+        });
+      } else {
+        const income = incomes[candidate.id];
+        if (!income) continue;
+        await updateIncome(candidate.id, {
+          title: income.title,
+          accountId: income.accountId,
+          categoryId: income.categoryId,
+          amount: income.amount,
+          datetime: income.datetime,
+          debtPerson: candidate.person,
+        });
+      }
+    }
+  };
 };
 
 export const useDebtTransactions = (): DebtTransaction[] => {

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DebtTransaction,
   computeDebts,
+  extractDebtPersonFromTitle,
   extractDebtPersonsFromTitles,
   isDebtCategoryTitle,
   normalizeDebtPerson,
@@ -42,6 +43,20 @@ describe("debt entity lib", () => {
 
     it("ignores numbers and single letters", () => {
       expect(extractDebtPersonsFromTitles(["Долг 100 я"])).toEqual([]);
+    });
+  });
+
+  describe("extractDebtPersonFromTitle", () => {
+    it("extracts a single unambiguous name", () => {
+      expect(extractDebtPersonFromTitle("Дать долг Рома")).toBe("Рома");
+      expect(extractDebtPersonFromTitle("Долг фама вернул ")).toBe("Фама");
+      expect(extractDebtPersonFromTitle("Олег отдал долг")).toBe("Олег");
+    });
+
+    it("returns null when there is no name or it is ambiguous", () => {
+      expect(extractDebtPersonFromTitle("Долг")).toBe(null);
+      expect(extractDebtPersonFromTitle("Долг 100")).toBe(null);
+      expect(extractDebtPersonFromTitle("Долг Рома Олег")).toBe(null);
     });
   });
 
