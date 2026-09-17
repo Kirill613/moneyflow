@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 
@@ -13,11 +13,20 @@ import {
   createIncomeCategoryFormSchema,
 } from "@features/create-income-category";
 import { DeleteIncomeCategoryButton } from "@features/delete-income-category";
+import { CurrencyTotals, getSubcategoryTotals } from "@features/statistics";
 
+import { useAccountsStore } from "@entities/account";
 import {
+  CategoryCard,
   IncomeCategoryCardList,
   useIncomeCategoriesStore,
 } from "@entities/category";
+import {
+  createCurrencyAmountString,
+  formatAmountPrecision,
+  useCurrenciesStore,
+} from "@entities/currency";
+import { useIncomesStore } from "@entities/transaction";
 
 import { FloatingActionButton } from "@shared/ui/buttons";
 import { Divider } from "@shared/ui/dividers";
@@ -31,10 +40,45 @@ export const IncomeCategoryOverviewPage = () => {
     throw new Error("Impossible income category id");
   }
   const { incomeCategories } = useIncomeCategoriesStore();
+  const { incomes } = useIncomesStore((state) => ({
+    incomes: state.incomes,
+  }));
+  const { accounts } = useAccountsStore();
+  const {
+    currencies: { currencies },
+  } = useCurrenciesStore();
   const category = incomeCategories[id];
-  const subCategories = Object.values(incomeCategories).filter(
-    (subCategory) => subCategory.parentId === category?.id,
+
+  const totals = useMemo(
+    () =>
+      getSubcategoryTotals(
+        id,
+        incomeCategories,
+        Object.values(incomes),
+        accounts,
+      ),
+    [id, incomeCategories, incomes, accounts],
   );
+
+  const formatTotals = (currencyTotals?: CurrencyTotals): string[] =>
+    Object.entries(currencyTotals ?? {}).map(([currencyId, amount]) => {
+      const currency = currencies[currencyId];
+      if (!currency) {
+        return `+${amount}`;
+      }
+      return `+${createCurrencyAmountString({
+        currency,
+        amount: formatAmountPrecision(amount, currency.precision),
+      })}`;
+    });
+
+  const subCategories = Object.values(incomeCategories)
+    .filter((subCategory) => subCategory.parentId === category?.id)
+    .map((subCategory) => ({
+      ...subCategory,
+      amounts: formatTotals(totals.children[subCategory.id]),
+    }));
+  const directAmounts = formatTotals(totals.direct);
 
   const methods = useForm<CreateIncomeCategoryFormData>({
     defaultValues: category,
@@ -75,7 +119,19 @@ export const IncomeCategoryOverviewPage = () => {
             <div className="flex flex-col gap-3">
               <h2 className="ms-4 text-h2 text-text">Sub-categories</h2>
               {subCategories.length ? (
-                <IncomeCategoryCardList categories={subCategories} />
+                <>
+                  <IncomeCategoryCardList categories={subCategories} />
+                  {directAmounts.length > 0 && (
+                    <CategoryCard className="flex items-center justify-between gap-3 bg-transparent">
+                      <span className="text-subtext0">Без подкатегории</span>
+                      <span className="flex flex-col items-end gap-0.5 text-green">
+                        {directAmounts.map((amount) => (
+                          <span key={amount}>{amount}</span>
+                        ))}
+                      </span>
+                    </CategoryCard>
+                  )}
+                </>
               ) : (
                 <p className="text-body-sm font-medium text-subtext0 indent-4">
                   You don’t have any sub-categories yet. To add first tap add

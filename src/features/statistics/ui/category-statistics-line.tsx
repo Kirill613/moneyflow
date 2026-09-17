@@ -5,10 +5,12 @@ import {
   formatAmountPrecision,
 } from "@entities/currency";
 
+import { Link } from "@shared/ui/links";
+
 import { ProgressBar } from "./progress-bar";
 
 interface CategoryStatisticsLineProps {
-  category: { title: string; amount: string; percentage: string };
+  category: { id: string; title: string; amount: string; percentage: string };
   categoryType: CategoryType;
   currency: Currency;
 }
@@ -24,7 +26,7 @@ const categoryTypeToAmountPrefix: Record<CategoryType, string> = {
 };
 
 export function CategoryStatisticsLine({
-  category: { title, amount, percentage },
+  category: { id, title, amount, percentage },
   categoryType,
   currency,
 }: CategoryStatisticsLineProps) {
@@ -37,7 +39,10 @@ export function CategoryStatisticsLine({
   })}`;
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <Link
+      to={`/${categoryType}-categories/${id}`}
+      className="flex flex-col gap-2.5"
+    >
       <div className="flex justify-between items-center gap-4 text-sm font-bold">
         <span className="text-subtext0">{title}</span>
         <span className={categoryTypeToClassName[categoryType]}>
@@ -50,6 +55,6 @@ export function CategoryStatisticsLine({
           {formattedPercentage}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }

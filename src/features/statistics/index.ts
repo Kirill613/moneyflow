@@ -13,6 +13,11 @@ export {
   type ConvertedCurrenciesTotalResult,
 } from "./model/get-converted-currencies-total";
 export { targetDisplayCurrency } from "./model/target-display-currency";
+export {
+  getSubcategoryTotals,
+  type CurrencyTotals,
+  type SubcategoryTotals,
+} from "./model/subcategory-totals";
 export type {
   CategoriesStatistics,
   CategoryStatistics,

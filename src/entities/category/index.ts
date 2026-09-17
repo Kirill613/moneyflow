@@ -1,3 +1,4 @@
+export { CategoryCard } from "./ui/category-card";
 export { ExpenseCategoryCardList } from "./ui/expense-category-card-list";
 export { useExpenseCategoriesStore } from "./model/expense-categories-store";
 export { IncomeCategoryCardList } from "./ui/income-category-card-list";
