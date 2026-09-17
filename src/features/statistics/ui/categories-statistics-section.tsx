@@ -7,7 +7,10 @@ import {
   formatAmountPrecision,
 } from "@entities/currency";
 
-import { CategoryStatisticsLine } from "./category-statistics-line";
+import {
+  CategoryStatisticsBreakdownItem,
+  CategoryStatisticsLine,
+} from "./category-statistics-line";
 
 interface CategoriesStatisticsSectionProps {
   categories: {
@@ -15,6 +18,7 @@ interface CategoriesStatisticsSectionProps {
     title: string;
     amount: string;
     percentage: string;
+    breakdown?: CategoryStatisticsBreakdownItem[];
   }[];
   categoryType: CategoryType;
   totalAmount: string;

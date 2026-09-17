@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { getSubcategoryTotals } from "./subcategory-totals";
+import {
+  getCurrencyCategoryBreakdown,
+  getSubcategoryTotals,
+} from "./subcategory-totals";
 
 const categories = {
   car: { id: "car", parentId: null },
@@ -91,5 +94,59 @@ describe("getSubcategoryTotals", () => {
     );
     expect(totals.direct).toEqual({});
     expect(totals.children).toEqual({});
+  });
+});
+
+describe("getCurrencyCategoryBreakdown", () => {
+  const titled = {
+    car: { id: "car", parentId: null, title: "Машина" },
+    kx1: { id: "kx1", parentId: "car", title: "kx1" },
+    x70: { id: "x70", parentId: "car", title: "X70" },
+    home: { id: "home", parentId: null, title: "Дом" },
+  };
+
+  it("returns children sorted by amount with a trailing direct row", () => {
+    const breakdown = getCurrencyCategoryBreakdown(
+      "car",
+      titled,
+      [
+        transaction("kx1", "50"),
+        transaction("x70", "470"),
+        transaction("car", "200"),
+      ],
+      accounts,
+      "byn",
+      "Без подкатегории",
+    );
+    expect(breakdown).toEqual([
+      { id: "x70", title: "X70", amount: "470" },
+      { id: "kx1", title: "kx1", amount: "50" },
+      { id: null, title: "Без подкатегории", amount: "200" },
+    ]);
+  });
+
+  it("returns [] when there is nothing to break down", () => {
+    expect(
+      getCurrencyCategoryBreakdown(
+        "home",
+        titled,
+        [transaction("home", "10")],
+        accounts,
+        "byn",
+        "Без подкатегории",
+      ),
+    ).toEqual([]);
+  });
+
+  it("filters to the requested currency", () => {
+    const breakdown = getCurrencyCategoryBreakdown(
+      "car",
+      titled,
+      [transaction("kx1", "10"), transaction("x70", "3", "dollars")],
+      accounts,
+      "usd",
+      "Без подкатегории",
+    );
+    expect(breakdown).toEqual([{ id: "x70", title: "X70", amount: "3" }]);
   });
 });

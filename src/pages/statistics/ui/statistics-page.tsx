@@ -12,6 +12,7 @@ import {
   CategoriesStatisticsSection,
   CurrencyTotalCard,
   getCurrenciesStatistics,
+  getCurrencyCategoryBreakdown,
   netSameTitledCategories,
 } from "@features/statistics";
 
@@ -21,7 +22,7 @@ import {
   useIncomeCategoriesStore,
 } from "@entities/category";
 import { useCurrenciesStore } from "@entities/currency";
-import { useTransactions } from "@entities/transaction";
+import { TransactionType, useTransactions } from "@entities/transaction";
 
 import { Divider } from "@shared/ui/dividers";
 import { PageLayout } from "@shared/ui/layouts";
@@ -75,6 +76,21 @@ export const StatisticsPage = () => {
         incomeCategories,
       ),
     [accounts, expenseCategories, incomeCategories, filteredTransactions],
+  );
+
+  const expenseTransactions = useMemo(
+    () =>
+      filteredTransactions.filter(
+        (transaction) => transaction.type === TransactionType.expense,
+      ) as { categoryId: string; accountId: string; amount: string }[],
+    [filteredTransactions],
+  );
+  const incomeTransactions = useMemo(
+    () =>
+      filteredTransactions.filter(
+        (transaction) => transaction.type === TransactionType.income,
+      ) as { categoryId: string; accountId: string; amount: string }[],
+    [filteredTransactions],
   );
 
   const fromDateString = filters.fromDateTimeRange?.toLocaleString({
@@ -164,6 +180,14 @@ export const StatisticsPage = () => {
                           amount: category.amount,
                           percentage: category.percentage,
                           title: expenseCategories[category.categoryId].title,
+                          breakdown: getCurrencyCategoryBreakdown(
+                            category.categoryId,
+                            expenseCategories,
+                            expenseTransactions,
+                            accounts,
+                            currencyId,
+                            "Без подкатегории",
+                          ),
                         }),
                       )}
                     />
@@ -181,6 +205,14 @@ export const StatisticsPage = () => {
                           amount: category.amount,
                           percentage: category.percentage,
                           title: incomeCategories[category.categoryId].title,
+                          breakdown: getCurrencyCategoryBreakdown(
+                            category.categoryId,
+                            incomeCategories,
+                            incomeTransactions,
+                            accounts,
+                            currencyId,
+                            "Без подкатегории",
+                          ),
                         }),
                       )}
                     />

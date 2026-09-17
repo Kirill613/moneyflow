@@ -5,6 +5,13 @@ export interface SubcategoryTotalsCategory {
   parentId: string | null;
 }
 
+export interface CategoryBreakdownItem {
+  // null marks spending on the category itself
+  id: string | null;
+  title: string;
+  amount: string;
+}
+
 export interface SubcategoryTotalsTransaction {
   categoryId: string;
   accountId: string;
@@ -73,4 +80,45 @@ export const getSubcategoryTotals = (
       ]),
     ),
   };
+};
+
+// One currency's slice of the subtree totals as displayable rows: each direct
+// child with spending in that currency (sorted descending), then a final row
+// with id null for spending on the category itself. Returns [] when the
+// category has no children with spending — nothing to break down.
+export const getCurrencyCategoryBreakdown = (
+  categoryId: string,
+  categories: Record<string, SubcategoryTotalsCategory & { title: string }>,
+  transactions: SubcategoryTotalsTransaction[],
+  accounts: Record<string, { currencyId: string }>,
+  currencyId: string,
+  directLabel: string,
+): CategoryBreakdownItem[] => {
+  const totals = getSubcategoryTotals(
+    categoryId,
+    categories,
+    transactions,
+    accounts,
+  );
+
+  const children: CategoryBreakdownItem[] = [];
+  for (const [childId, currencyTotals] of Object.entries(totals.children)) {
+    const amount = currencyTotals[currencyId];
+    if (typeof amount === "undefined") continue;
+    children.push({
+      id: childId,
+      title: categories[childId]?.title ?? "",
+      amount,
+    });
+  }
+  if (children.length === 0) {
+    return [];
+  }
+  children.sort((a, b) => new Decimal(b.amount).minus(a.amount).toNumber());
+
+  const direct = totals.direct[currencyId];
+  if (typeof direct !== "undefined") {
+    children.push({ id: null, title: directLabel, amount: direct });
+  }
+  return children;
 };

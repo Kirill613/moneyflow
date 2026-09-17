@@ -14,7 +14,9 @@ export {
 } from "./model/get-converted-currencies-total";
 export { targetDisplayCurrency } from "./model/target-display-currency";
 export {
+  getCurrencyCategoryBreakdown,
   getSubcategoryTotals,
+  type CategoryBreakdownItem,
   type CurrencyTotals,
   type SubcategoryTotals,
 } from "./model/subcategory-totals";
