@@ -7,6 +7,7 @@ export interface CreateExpenseDTO {
   amount: string;
   datetime: number;
   debtPerson?: string;
+  excludedFromStatistics?: boolean;
 }
 
 export type UpdateExpenseDTO = CreateExpenseDTO;

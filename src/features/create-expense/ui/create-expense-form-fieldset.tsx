@@ -6,6 +6,7 @@ import {
   CategorySelect,
   ExpenseCategoryID,
   ExpenseCategories,
+  getTopExcludedCategory,
 } from "@entities/category";
 import {
   CurrenciesMap,
@@ -26,6 +27,7 @@ import { positiveDecimalRegex } from "@shared/lib/regex";
 import { ColorPickerColor } from "@shared/ui/color-pickers";
 import { CalendarIcon } from "@shared/ui/icons";
 import { Input } from "@shared/ui/inputs";
+import { Toggle } from "@shared/ui/toggles";
 
 interface CreateExpenseFormAccount {
   id: AccountID;
@@ -42,6 +44,7 @@ export interface CreateExpenseFormData {
   amount: string;
   datetime: string;
   debtPerson: string;
+  includeInStatistics: boolean;
 }
 
 export interface CreateExpenseFormFieldsetProps
@@ -63,6 +66,7 @@ export const createExpenseFormSchema = z.object({
   amount: z.string().regex(positiveDecimalRegex),
   datetime: z.string().nonempty(),
   debtPerson: z.string(),
+  includeInStatistics: z.boolean(),
 });
 
 export const CreateExpenseFormFieldset = ({
@@ -85,6 +89,9 @@ export const CreateExpenseFormFieldset = ({
   const isDebtCategory =
     categoryId !== null &&
     isDebtCategoryTitle(categories[categoryId]?.title ?? "");
+  const isCategoryExcluded =
+    categoryId !== null &&
+    getTopExcludedCategory(categories, categoryId) !== null;
   const currencySymbol =
     accountId === null
       ? undefined
@@ -108,6 +115,7 @@ export const CreateExpenseFormFieldset = ({
       accountId: expense.accountId,
       amount: expense.amount,
       debtPerson: expense.debtPerson ?? "",
+      includeInStatistics: expense.excludedFromStatistics === false,
     });
   };
 
@@ -168,6 +176,25 @@ export const CreateExpenseFormFieldset = ({
             </div>
           )}
         </div>
+      )}
+      {isCategoryExcluded && (
+        <Controller
+          control={control}
+          name="includeInStatistics"
+          render={({ field: { value, onChange } }) => (
+            <div className="flex items-center justify-between gap-3 px-4">
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-text">
+                  Учитывать в статистике
+                </span>
+                <span className="text-xs text-subtext0">
+                  Категория скрыта из статистики, но эта запись будет считаться
+                </span>
+              </div>
+              <Toggle checked={value ?? false} onChange={onChange} />
+            </div>
+          )}
+        />
       )}
       <Controller
         control={control}

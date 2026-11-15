@@ -3,6 +3,10 @@ import { useFormContext } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 
+import {
+  getTopExcludedCategory,
+  useIncomeCategoriesStore,
+} from "@entities/category";
 import { normalizeDebtPerson } from "@entities/debt";
 import { IncomeID, useIncomesStore } from "@entities/transaction";
 
@@ -22,6 +26,7 @@ export const UpdateIncomeButton = ({
   const { updateIncome } = useIncomesStore((state) => ({
     updateIncome: state.updateIncome,
   }));
+  const { incomeCategories } = useIncomeCategoriesStore();
   const navigate = useNavigate();
   const { handleSubmit, formState } = useFormContext<CreateIncomeFormData>();
 
@@ -33,12 +38,19 @@ export const UpdateIncomeButton = ({
       throw new Error("Impossible categoryId on income update");
     }
 
+    const { includeInStatistics, ...incomeData } = income;
     await updateIncome(id, {
-      ...income,
+      ...incomeData,
       accountId: income.accountId,
       categoryId: income.categoryId,
       datetime: DateTime.fromISO(income.datetime),
       debtPerson: normalizeDebtPerson(income.debtPerson) || undefined,
+      excludedFromStatistics:
+        income.categoryId !== null &&
+        getTopExcludedCategory(incomeCategories, income.categoryId) !== null &&
+        includeInStatistics
+          ? false
+          : undefined,
     });
     navigate(-1);
   };

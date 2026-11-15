@@ -13,6 +13,7 @@ import {
   CurrencyTotalCard,
   getCurrenciesStatistics,
   getCurrencyCategoryBreakdown,
+  isTransactionExcludedFromStatistics,
   netSameTitledCategories,
 } from "@features/statistics";
 
@@ -78,20 +79,75 @@ export const StatisticsPage = () => {
     [accounts, expenseCategories, incomeCategories, filteredTransactions],
   );
 
+  type BreakdownTransaction = {
+    categoryId: string;
+    accountId: string;
+    amount: string;
+    excludedFromStatistics?: boolean;
+  };
+  const partitionByExclusion = (
+    transactions: BreakdownTransaction[],
+    categories: typeof expenseCategories,
+  ) => {
+    const counted: BreakdownTransaction[] = [];
+    const excluded: BreakdownTransaction[] = [];
+    for (const transaction of transactions) {
+      (isTransactionExcludedFromStatistics(categories, transaction)
+        ? excluded
+        : counted
+      ).push(transaction);
+    }
+    return { counted, excluded };
+  };
   const expenseTransactions = useMemo(
     () =>
-      filteredTransactions.filter(
-        (transaction) => transaction.type === TransactionType.expense,
-      ) as { categoryId: string; accountId: string; amount: string }[],
-    [filteredTransactions],
+      partitionByExclusion(
+        filteredTransactions.filter(
+          (transaction) => transaction.type === TransactionType.expense,
+        ) as BreakdownTransaction[],
+        expenseCategories,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filteredTransactions, expenseCategories],
   );
   const incomeTransactions = useMemo(
     () =>
-      filteredTransactions.filter(
-        (transaction) => transaction.type === TransactionType.income,
-      ) as { categoryId: string; accountId: string; amount: string }[],
-    [filteredTransactions],
+      partitionByExclusion(
+        filteredTransactions.filter(
+          (transaction) => transaction.type === TransactionType.income,
+        ) as BreakdownTransaction[],
+        incomeCategories,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filteredTransactions, incomeCategories],
   );
+
+  const buildBreakdown = (
+    rootId: string,
+    categories: typeof expenseCategories,
+    transactions: {
+      counted: BreakdownTransaction[];
+      excluded: BreakdownTransaction[];
+    },
+    currencyId: string,
+  ) => [
+    ...getCurrencyCategoryBreakdown(
+      rootId,
+      categories,
+      transactions.counted,
+      accounts,
+      currencyId,
+      "Без подкатегории",
+    ),
+    ...getCurrencyCategoryBreakdown(
+      rootId,
+      categories,
+      transactions.excluded,
+      accounts,
+      currencyId,
+      "Без подкатегории",
+    ).map((item) => ({ ...item, excluded: true })),
+  ];
 
   const fromDateString = filters.fromDateTimeRange?.toLocaleString({
     day: "2-digit",
@@ -196,13 +252,11 @@ export const StatisticsPage = () => {
                         amount: category.amount,
                         title:
                           expenseCategories[category.categoryId]?.title ?? "",
-                        breakdown: getCurrencyCategoryBreakdown(
+                        breakdown: buildBreakdown(
                           category.categoryId,
                           expenseCategories,
                           expenseTransactions,
-                          accounts,
                           currencyId,
-                          "Без подкатегории",
                         ),
                       }))}
                       categories={currencyStatistics.expenseRootCategories.categories.map(
@@ -211,13 +265,11 @@ export const StatisticsPage = () => {
                           amount: category.amount,
                           percentage: category.percentage,
                           title: expenseCategories[category.categoryId].title,
-                          breakdown: getCurrencyCategoryBreakdown(
+                          breakdown: buildBreakdown(
                             category.categoryId,
                             expenseCategories,
                             expenseTransactions,
-                            accounts,
                             currencyId,
-                            "Без подкатегории",
                           ),
                         }),
                       )}
@@ -236,13 +288,11 @@ export const StatisticsPage = () => {
                         amount: category.amount,
                         title:
                           incomeCategories[category.categoryId]?.title ?? "",
-                        breakdown: getCurrencyCategoryBreakdown(
+                        breakdown: buildBreakdown(
                           category.categoryId,
                           incomeCategories,
                           incomeTransactions,
-                          accounts,
                           currencyId,
-                          "Без подкатегории",
                         ),
                       }))}
                       categories={currencyStatistics.incomeRootCategories.categories.map(
@@ -251,13 +301,11 @@ export const StatisticsPage = () => {
                           amount: category.amount,
                           percentage: category.percentage,
                           title: incomeCategories[category.categoryId].title,
-                          breakdown: getCurrencyCategoryBreakdown(
+                          breakdown: buildBreakdown(
                             category.categoryId,
                             incomeCategories,
                             incomeTransactions,
-                            accounts,
                             currencyId,
-                            "Без подкатегории",
                           ),
                         }),
                       )}

@@ -44,6 +44,7 @@ export const IncomeOverviewPage = () => {
       ...income,
       datetime: toLocalDatetime(income.datetime),
       debtPerson: income.debtPerson ?? "",
+      includeInStatistics: income.excludedFromStatistics === false,
     },
     resolver: zodResolver(createIncomeFormSchema),
   });

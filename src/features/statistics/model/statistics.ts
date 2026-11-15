@@ -5,6 +5,7 @@ import {
   ExpenseCategoryID,
   IncomeCategoryID,
   getRootCategory,
+  getTopExcludedCategory,
 } from "@entities/category";
 import { CurrencyID } from "@entities/currency";
 import { Transaction, TransactionType } from "@entities/transaction";
@@ -29,6 +30,7 @@ export interface ExpenseForStatistics {
   amount: string;
   accountId: AccountID;
   categoryId: ExpenseCategoryID;
+  excludedFromStatistics?: boolean;
 }
 
 export interface IncomeForStatistics {
@@ -36,6 +38,7 @@ export interface IncomeForStatistics {
   amount: string;
   accountId: AccountID;
   categoryId: IncomeCategoryID;
+  excludedFromStatistics?: boolean;
 }
 
 export interface TransferForStatistics {
@@ -77,26 +80,17 @@ export interface CurrencyStatistics {
   excludedIncomeCategories?: CategoriesStatistics;
 }
 
-// The topmost category on the path from categoryId to its root that is marked
-// excludedFromStatistics, or null when the whole path is included. The topmost
-// one wins so everything under a hidden category is grouped under it.
-export const getTopExcludedCategory = (
+export { getTopExcludedCategory };
+
+// A transaction's own excludedFromStatistics flag overrides the category
+// inheritance: false keeps it counted inside a hidden category, true hides it
+// anywhere.
+export const isTransactionExcludedFromStatistics = (
   categories: CategoriesForStatistics,
-  categoryId: string,
-): CategoryForStatistics | null => {
-  let excluded: CategoryForStatistics | null = null;
-  let current: CategoryForStatistics | undefined = categories[categoryId];
-  const visited = new Set<string>();
-  while (current && !visited.has(current.id)) {
-    visited.add(current.id);
-    if (current.excludedFromStatistics) {
-      excluded = current;
-    }
-    current =
-      current.parentId === null ? undefined : categories[current.parentId];
-  }
-  return excluded;
-};
+  transaction: { categoryId: string; excludedFromStatistics?: boolean },
+): boolean =>
+  transaction.excludedFromStatistics ??
+  getTopExcludedCategory(categories, transaction.categoryId) !== null;
 
 export type CurrenciesStatistics = Record<CurrencyID, CurrencyStatistics>;
 
@@ -232,11 +226,12 @@ export function getCurrenciesStatistics(
           statistics[currencyId] ??
           (statistics[currencyId] = emptyCurrencyStatistics());
 
-        const excludedCategory = getTopExcludedCategory(
-          expenseCategories,
-          transaction.categoryId,
-        );
-        if (excludedCategory !== null) {
+        if (
+          isTransactionExcludedFromStatistics(expenseCategories, transaction)
+        ) {
+          const excludedCategory =
+            getTopExcludedCategory(expenseCategories, transaction.categoryId) ??
+            rootCategory;
           const excludedStatistics =
             currencyStatistics.excludedExpenseCategories[excludedCategory.id] ??
             (currencyStatistics.excludedExpenseCategories[excludedCategory.id] =
@@ -271,11 +266,12 @@ export function getCurrenciesStatistics(
           statistics[currencyId] ??
           (statistics[currencyId] = emptyCurrencyStatistics());
 
-        const excludedCategory = getTopExcludedCategory(
-          incomeCategories,
-          transaction.categoryId,
-        );
-        if (excludedCategory !== null) {
+        if (
+          isTransactionExcludedFromStatistics(incomeCategories, transaction)
+        ) {
+          const excludedCategory =
+            getTopExcludedCategory(incomeCategories, transaction.categoryId) ??
+            rootCategory;
           const excludedStatistics =
             currencyStatistics.excludedIncomeCategories[excludedCategory.id] ??
             (currencyStatistics.excludedIncomeCategories[excludedCategory.id] =

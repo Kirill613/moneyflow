@@ -6,7 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 
 import { useAccountsStore } from "@entities/account";
-import { useExpenseCategoriesStore } from "@entities/category";
+import {
+  getTopExcludedCategory,
+  useExpenseCategoriesStore,
+} from "@entities/category";
 import { useCurrenciesStore } from "@entities/currency";
 import { normalizeDebtPerson } from "@entities/debt";
 import { useExpensesStore } from "@entities/transaction";
@@ -66,8 +69,15 @@ export const CreateExpenseForm = ({
   });
   const { handleSubmit, formState, watch } = methods;
 
-  const { title, categoryId, accountId, amount, datetime, debtPerson } =
-    watch();
+  const {
+    title,
+    categoryId,
+    accountId,
+    amount,
+    datetime,
+    debtPerson,
+    includeInStatistics,
+  } = watch();
 
   useEffect(() => {
     const category =
@@ -93,6 +103,7 @@ export const CreateExpenseForm = ({
       amount,
       datetime,
       debtPerson,
+      includeInStatistics,
     });
   }, [
     title,
@@ -101,6 +112,7 @@ export const CreateExpenseForm = ({
     amount,
     datetime,
     debtPerson,
+    includeInStatistics,
     setCreateExpenseFormState,
   ]);
 
@@ -112,12 +124,20 @@ export const CreateExpenseForm = ({
       throw new Error("Impossible categoryId on expense creation");
     }
 
+    const { includeInStatistics, ...expenseData } = expense;
     await createExpense({
-      ...expense,
+      ...expenseData,
       accountId: expense.accountId,
       categoryId: expense.categoryId,
       datetime: DateTime.fromISO(expense.datetime),
       debtPerson: normalizeDebtPerson(expense.debtPerson) || undefined,
+      excludedFromStatistics:
+        expense.categoryId !== null &&
+        getTopExcludedCategory(expenseCategories, expense.categoryId) !==
+          null &&
+        includeInStatistics
+          ? false
+          : undefined,
     });
     resetCreateExpenseFormState();
     navigate(-1);

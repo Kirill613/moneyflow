@@ -77,7 +77,7 @@ export function CategoriesStatisticsSection({
           ))}
           {excludedCategories.map((category) => (
             <CategoryStatisticsLine
-              key={category.id}
+              key={`excluded-${category.id}`}
               category={{ ...category, percentage: "0.00", excluded: true }}
               categoryType={categoryType}
               currency={currency}

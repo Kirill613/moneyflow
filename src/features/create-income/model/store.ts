@@ -22,10 +22,26 @@ export const useCreateIncomeFormStore = create<CreateIncomeFormStoreState>()(
     amount: "",
     datetime: "",
     debtPerson: "",
+    includeInStatistics: false,
     getCreateIncomeFormState() {
-      const { title, categoryId, accountId, amount, datetime, debtPerson } =
-        get();
-      return { title, categoryId, accountId, amount, datetime, debtPerson };
+      const {
+        title,
+        categoryId,
+        accountId,
+        amount,
+        datetime,
+        debtPerson,
+        includeInStatistics,
+      } = get();
+      return {
+        title,
+        categoryId,
+        accountId,
+        amount,
+        datetime,
+        debtPerson,
+        includeInStatistics,
+      };
     },
     setCreateIncomeFormState(value) {
       set({ ...value });
@@ -44,6 +60,7 @@ export const useCreateIncomeFormStore = create<CreateIncomeFormStoreState>()(
         amount: "",
         datetime: "",
         debtPerson: "",
+        includeInStatistics: false,
       });
     },
   })),

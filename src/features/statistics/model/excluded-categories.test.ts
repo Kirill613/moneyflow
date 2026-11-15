@@ -72,3 +72,43 @@ describe("excluded categories in statistics", () => {
     expect(byn.excludedIncomeCategories).toBeUndefined();
   });
 });
+
+describe("per-transaction excludedFromStatistics override", () => {
+  it("keeps a flagged-false transaction counted inside a hidden category", () => {
+    const statistics = getCurrenciesStatistics(
+      accounts,
+      expenseCategories,
+      incomeCategories,
+      [
+        expense("kx1", "30714"),
+        { ...expense("kx1", "1500"), excludedFromStatistics: false },
+        expense("car", "100"),
+      ],
+    );
+    const byn = statistics.byn;
+    expect(byn.expenseAmount).toBe("1600");
+    expect(byn.expenseRootCategories.categories).toEqual([
+      { categoryId: "car", amount: "1600", percentage: "100.00" },
+    ]);
+    expect(byn.excludedExpenseCategories?.categories).toEqual([
+      { categoryId: "kx1", amount: "30714", percentage: "100.00" },
+    ]);
+  });
+
+  it("hides a flagged-true transaction inside a normal category", () => {
+    const statistics = getCurrenciesStatistics(
+      accounts,
+      expenseCategories,
+      incomeCategories,
+      [
+        expense("home", "40"),
+        { ...expense("home", "7"), excludedFromStatistics: true },
+      ],
+    );
+    const byn = statistics.byn;
+    expect(byn.expenseAmount).toBe("40");
+    expect(byn.excludedExpenseCategories?.categories).toEqual([
+      { categoryId: "home", amount: "7", percentage: "100.00" },
+    ]);
+  });
+});

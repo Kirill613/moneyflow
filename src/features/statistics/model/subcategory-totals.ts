@@ -1,7 +1,5 @@
 import { Decimal } from "decimal.js";
 
-import { getTopExcludedCategory } from "./statistics";
-
 export interface SubcategoryTotalsCategory {
   id: string;
   parentId: string | null;
@@ -106,21 +104,15 @@ export const getCurrencyCategoryBreakdown = (
     accounts,
   );
 
-  const parentExcluded = getTopExcludedCategory(categories, categoryId);
   const children: CategoryBreakdownItem[] = [];
   for (const [childId, currencyTotals] of Object.entries(totals.children)) {
     const amount = currencyTotals[currencyId];
     if (typeof amount === "undefined") continue;
-    const item: CategoryBreakdownItem = {
+    children.push({
       id: childId,
       title: categories[childId]?.title ?? "",
       amount,
-    };
-    const childExcluded = getTopExcludedCategory(categories, childId);
-    if (childExcluded !== null && childExcluded !== parentExcluded) {
-      item.excluded = true;
-    }
-    children.push(item);
+    });
   }
   if (children.length === 0) {
     return [];

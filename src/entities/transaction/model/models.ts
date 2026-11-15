@@ -9,6 +9,7 @@ export interface CreateExpense {
   amount: string;
   datetime: DateTime;
   debtPerson?: string;
+  excludedFromStatistics?: boolean;
 }
 
 export type UpdateExpense = CreateExpense;
@@ -29,6 +30,7 @@ export interface CreateIncome {
   amount: string;
   datetime: DateTime;
   debtPerson?: string;
+  excludedFromStatistics?: boolean;
 }
 
 export type UpdateIncome = CreateIncome;

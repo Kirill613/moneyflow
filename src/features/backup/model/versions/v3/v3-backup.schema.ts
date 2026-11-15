@@ -70,6 +70,7 @@ const v3ExpenseSchema = z.object({
   datetime: z.number().int().positive(),
   createdAt: z.number().int().positive(),
   debtPerson: z.string().optional(),
+  excludedFromStatistics: z.boolean().optional(),
 });
 
 const v3IncomeCategorySchema = z.object({
@@ -89,6 +90,7 @@ const v3IncomeSchema = z.object({
   datetime: z.number().int().positive(),
   createdAt: z.number().int().positive(),
   debtPerson: z.string().optional(),
+  excludedFromStatistics: z.boolean().optional(),
 });
 
 const v3TransferAccount = z.object({

@@ -3,6 +3,7 @@ export {
   getCurrencyBalance,
   getCurrenciesStatistics,
   getTopExcludedCategory,
+  isTransactionExcludedFromStatistics,
 } from "./model/statistics";
 export { netSameTitledCategories } from "./model/net-same-titled-categories";
 export {

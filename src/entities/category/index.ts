@@ -15,3 +15,4 @@ export {
 export { CategorySelect } from "./ui/category-select";
 export { createCategoryString } from "./lib/format";
 export { getRootCategory } from "./lib/get-root-category";
+export { getTopExcludedCategory } from "./lib/excluded";

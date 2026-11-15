@@ -22,10 +22,26 @@ export const useCreateExpenseFormStore = create<CreateExpenseFormStoreState>()(
     amount: "",
     datetime: "",
     debtPerson: "",
+    includeInStatistics: false,
     getCreateExpenseFormState() {
-      const { title, categoryId, accountId, amount, datetime, debtPerson } =
-        get();
-      return { title, categoryId, accountId, amount, datetime, debtPerson };
+      const {
+        title,
+        categoryId,
+        accountId,
+        amount,
+        datetime,
+        debtPerson,
+        includeInStatistics,
+      } = get();
+      return {
+        title,
+        categoryId,
+        accountId,
+        amount,
+        datetime,
+        debtPerson,
+        includeInStatistics,
+      };
     },
     setCreateExpenseFormState(value) {
       set({ ...value });
@@ -44,6 +60,7 @@ export const useCreateExpenseFormStore = create<CreateExpenseFormStoreState>()(
         amount: "",
         datetime: "",
         debtPerson: "",
+        includeInStatistics: false,
       });
     },
   })),

@@ -131,9 +131,12 @@ export function CategoryStatisticsLine({
                 </span>
               </>
             );
+            const key = `${item.excluded ? "excluded-" : ""}${
+              item.id ?? "__direct"
+            }`;
             return item.id !== null ? (
               <Link
-                key={item.id}
+                key={key}
                 to={`/${categoryType}-categories/${item.id}`}
                 className="flex justify-between items-center gap-4 text-sm"
               >
@@ -141,7 +144,7 @@ export function CategoryStatisticsLine({
               </Link>
             ) : (
               <div
-                key="__direct"
+                key={key}
                 className="flex justify-between items-center gap-4 text-sm"
               >
                 {row}

@@ -44,6 +44,7 @@ export const ExpenseOverviewPage = () => {
       ...expense,
       datetime: toLocalDatetime(expense.datetime),
       debtPerson: expense.debtPerson ?? "",
+      includeInStatistics: expense.excludedFromStatistics === false,
     },
     resolver: zodResolver(createExpenseFormSchema),
   });
