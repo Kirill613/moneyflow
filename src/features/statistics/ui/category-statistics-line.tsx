@@ -31,6 +31,8 @@ interface CategoryStatisticsLineProps {
     // the category is marked "Не учитывать в статистике": it is shown for
     // reference only and its amount is not part of the section totals
     excluded?: boolean;
+    // formatted amounts in the original currencies ("в т.ч. ...")
+    original?: string[];
   };
   categoryType: CategoryType;
   currency: Currency;
@@ -47,7 +49,7 @@ const categoryTypeToAmountPrefix: Record<CategoryType, string> = {
 };
 
 export function CategoryStatisticsLine({
-  category: { id, title, amount, percentage, breakdown, excluded },
+  category: { id, title, amount, percentage, breakdown, excluded, original },
   categoryType,
   currency,
 }: CategoryStatisticsLineProps) {
@@ -82,6 +84,11 @@ export function CategoryStatisticsLine({
         </span>
         <span className={amountClassName}>{formatAmount(amount)}</span>
       </div>
+      {original && original.length > 0 && (
+        <div className="text-[11px] text-overlay1 -mt-1.5 text-right">
+          в т.ч. {original.join(", ")}
+        </div>
+      )}
       {!excluded && (
         <div className="flex items-center gap-4">
           <ProgressBar progress={percentage} />

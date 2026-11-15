@@ -19,6 +19,7 @@ interface CategoriesStatisticsSectionProps {
     amount: string;
     percentage: string;
     breakdown?: CategoryStatisticsBreakdownItem[];
+    original?: string[];
   }[];
   // categories marked "Не учитывать в статистике": rendered greyed-out after
   // the counted ones and not part of totalAmount
@@ -27,6 +28,7 @@ interface CategoriesStatisticsSectionProps {
     title: string;
     amount: string;
     breakdown?: CategoryStatisticsBreakdownItem[];
+    original?: string[];
   }[];
   categoryType: CategoryType;
   totalAmount: string;

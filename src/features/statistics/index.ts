@@ -1,4 +1,8 @@
 export {
+  convertStatisticsTransactions,
+  type ConvertedStatisticsTransactions,
+} from "./model/convert-statistics-transactions";
+export {
   excludeHiddenTransactions,
   useBalanceTransactions,
 } from "./model/use-balance-transactions";

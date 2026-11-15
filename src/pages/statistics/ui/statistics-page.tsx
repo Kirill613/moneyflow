@@ -1,3 +1,4 @@
+import { Decimal } from "decimal.js";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
@@ -11,6 +12,7 @@ import {
 import {
   CategoriesStatisticsSection,
   CurrencyTotalCard,
+  convertStatisticsTransactions,
   getCurrenciesStatistics,
   getCurrencyCategoryBreakdown,
   isTransactionExcludedFromStatistics,
@@ -21,10 +23,16 @@ import { useAccountsStore } from "@entities/account";
 import {
   createCategoryString,
   getRootCategory,
+  getTopExcludedCategory,
   useExpenseCategoriesStore,
   useIncomeCategoriesStore,
 } from "@entities/category";
-import { useCurrenciesStore } from "@entities/currency";
+import {
+  createCurrencyAmountString,
+  formatAmountPrecision,
+  useCurrenciesStore,
+} from "@entities/currency";
+import { useCurrencyConversionStore } from "@entities/currency-conversion";
 import { TransactionType, useTransactions } from "@entities/transaction";
 
 import { Divider } from "@shared/ui/dividers";
@@ -76,27 +84,115 @@ export const StatisticsPage = () => {
       ].some((category) => category.excludedFromStatistics),
     [expenseCategories, incomeCategories],
   );
+  const { currencyCodes, rates } = useCurrencyConversionStore();
+  const bynPerUnit = useMemo(() => rates?.bynPerUnit ?? {}, [rates]);
+  const targetCurrencyId = useMemo(
+    () =>
+      currenciesOrder.find(
+        (currencyId) => currencyCodes[currencyId] === "BYN",
+      ) ?? null,
+    [currenciesOrder, currencyCodes],
+  );
+  const conversion = useMemo(() => {
+    if (targetCurrencyId === null || Object.keys(bynPerUnit).length === 0) {
+      return {
+        transactions: filteredTransactions,
+        accounts,
+        unconvertedCurrencyIds: [],
+        active: false,
+      };
+    }
+    return {
+      ...convertStatisticsTransactions(
+        filteredTransactions,
+        accounts,
+        currencyCodes,
+        bynPerUnit,
+        targetCurrencyId,
+        "BYN",
+      ),
+      active: true,
+    };
+  }, [
+    filteredTransactions,
+    accounts,
+    currencyCodes,
+    bynPerUnit,
+    targetCurrencyId,
+  ]);
+  const statsTransactions = conversion.transactions;
+  const statsAccounts = conversion.accounts;
+
   const statistics = useMemo(
     () =>
       netSameTitledCategories(
         getCurrenciesStatistics(
-          accounts,
+          statsAccounts,
           expenseCategories,
           incomeCategories,
-          filteredTransactions,
+          statsTransactions,
           { ignoreExclusions: includeHidden },
         ),
         expenseCategories,
         incomeCategories,
       ),
     [
-      accounts,
+      statsAccounts,
       expenseCategories,
       incomeCategories,
-      filteredTransactions,
+      statsTransactions,
       includeHidden,
     ],
   );
+
+  // original (unconverted) non-BYN sums per visible row, shown as "в т.ч. ..."
+  const originalComposition = useMemo(() => {
+    const expense: Record<string, Record<string, string>> = {};
+    const income: Record<string, Record<string, string>> = {};
+    if (!conversion.active) return { expense, income };
+    for (const transaction of filteredTransactions) {
+      if (transaction.type === TransactionType.transfer) continue;
+      const account = accounts[transaction.accountId];
+      if (!account || account.currencyId === targetCurrencyId) continue;
+      const isExpense = transaction.type === TransactionType.expense;
+      const categories = isExpense ? expenseCategories : incomeCategories;
+      const top = getTopExcludedCategory(categories, transaction.categoryId);
+      const counted =
+        includeHidden ||
+        transaction.excludedFromStatistics === false ||
+        top === null;
+      const rowId = counted
+        ? getRootCategory(categories, transaction.categoryId).id
+        : (top as NonNullable<typeof top>).id;
+      const bucket = isExpense ? expense : income;
+      const row = (bucket[rowId] = bucket[rowId] ?? {});
+      row[account.currencyId] = new Decimal(row[account.currencyId] ?? "0")
+        .plus(transaction.amount)
+        .toString();
+    }
+    return { expense, income };
+  }, [
+    conversion.active,
+    filteredTransactions,
+    accounts,
+    targetCurrencyId,
+    expenseCategories,
+    incomeCategories,
+    includeHidden,
+  ]);
+
+  const formatOriginal = (
+    composition: Record<string, string> | undefined,
+    prefix: string,
+  ): string[] =>
+    Object.entries(composition ?? {}).map(([currencyId, amount]) => {
+      const currency = currencies[currencyId];
+      if (!currency) return `${prefix}${amount}`;
+      return `${prefix}${createCurrencyAmountString({
+        currency,
+        amount: formatAmountPrecision(amount, currency.precision),
+      })}`;
+    });
 
   type BreakdownTransaction = {
     categoryId: string;
@@ -122,24 +218,24 @@ export const StatisticsPage = () => {
   const expenseTransactions = useMemo(
     () =>
       partitionByExclusion(
-        filteredTransactions.filter(
+        statsTransactions.filter(
           (transaction) => transaction.type === TransactionType.expense,
         ) as BreakdownTransaction[],
         expenseCategories,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filteredTransactions, expenseCategories, includeHidden],
+    [statsTransactions, expenseCategories, includeHidden],
   );
   const incomeTransactions = useMemo(
     () =>
       partitionByExclusion(
-        filteredTransactions.filter(
+        statsTransactions.filter(
           (transaction) => transaction.type === TransactionType.income,
         ) as BreakdownTransaction[],
         incomeCategories,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filteredTransactions, incomeCategories, includeHidden],
+    [statsTransactions, incomeCategories, includeHidden],
   );
 
   const buildBreakdown = (
@@ -155,7 +251,7 @@ export const StatisticsPage = () => {
       rootId,
       categories,
       transactions.counted,
-      accounts,
+      statsAccounts,
       currencyId,
       "Без подкатегории",
     ),
@@ -163,7 +259,7 @@ export const StatisticsPage = () => {
       rootId,
       categories,
       transactions.excluded,
-      accounts,
+      statsAccounts,
       currencyId,
       "Без подкатегории",
     ).map((item) => ({ ...item, excluded: true })),
@@ -277,6 +373,9 @@ export const StatisticsPage = () => {
               <div key={currency.id} className="flex flex-col gap-4 group">
                 <span className="text-sm text-subtext0 font-medium ">
                   {dateRangeString}
+                  {conversion.active && currencyId === targetCurrencyId
+                    ? " · всё ≈ BYN по курсу НБРБ"
+                    : ""}
                 </span>
                 <div className="flex flex-col gap-6">
                   <div className="grid grid-cols-2 gap-4">
@@ -302,6 +401,10 @@ export const StatisticsPage = () => {
                       excludedCategories={excludedExpense.map((category) => ({
                         id: category.categoryId,
                         amount: category.amount,
+                        original: formatOriginal(
+                          originalComposition.expense[category.categoryId],
+                          "-",
+                        ),
                         title: createCategoryString(
                           expenseCategories,
                           category.categoryId,
@@ -319,6 +422,10 @@ export const StatisticsPage = () => {
                           amount: category.amount,
                           percentage: category.percentage,
                           title: expenseCategories[category.categoryId].title,
+                          original: formatOriginal(
+                            originalComposition.expense[category.categoryId],
+                            "-",
+                          ),
                           breakdown: buildBreakdown(
                             category.categoryId,
                             expenseCategories,
@@ -340,6 +447,10 @@ export const StatisticsPage = () => {
                       excludedCategories={excludedIncome.map((category) => ({
                         id: category.categoryId,
                         amount: category.amount,
+                        original: formatOriginal(
+                          originalComposition.income[category.categoryId],
+                          "+",
+                        ),
                         title: createCategoryString(
                           incomeCategories,
                           category.categoryId,
@@ -357,6 +468,10 @@ export const StatisticsPage = () => {
                           amount: category.amount,
                           percentage: category.percentage,
                           title: incomeCategories[category.categoryId].title,
+                          original: formatOriginal(
+                            originalComposition.income[category.categoryId],
+                            "+",
+                          ),
                           breakdown: buildBreakdown(
                             category.categoryId,
                             incomeCategories,
