@@ -13,14 +13,16 @@ import {
   UpdateCurrencyButton,
 } from "@features/create-currency";
 import { DeleteCurrencyButton } from "@features/delete-currency";
-import { getCurrencyBalance } from "@features/statistics";
+import {
+  getCurrencyBalance,
+  useBalanceTransactions,
+} from "@features/statistics";
 
 import { useAccountsStore } from "@entities/account";
 import {
   createCurrencyAmountString,
   useCurrenciesStore,
 } from "@entities/currency";
-import { useTransactions } from "@entities/transaction";
 
 import { ColorPickerColor } from "@shared/ui/color-pickers";
 import { Divider } from "@shared/ui/dividers";
@@ -55,7 +57,7 @@ export const CurrencyOverviewPage = () => {
   const { accounts } = useAccountsStore((state) => ({
     accounts: state.accounts,
   }));
-  const transactions = useTransactions();
+  const transactions = useBalanceTransactions();
 
   const currency = getCurrency(id);
 

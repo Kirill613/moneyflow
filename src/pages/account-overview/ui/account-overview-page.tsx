@@ -13,14 +13,16 @@ import {
   UpdateAccountButton,
 } from "@features/create-account";
 import { DeleteAccountButton } from "@features/delete-account";
-import { getAccountBalance } from "@features/statistics";
+import {
+  getAccountBalance,
+  useBalanceTransactions,
+} from "@features/statistics";
 
 import { useAccountsStore } from "@entities/account";
 import {
   createCurrencyAmountString,
   useCurrenciesStore,
 } from "@entities/currency";
-import { useTransactions } from "@entities/transaction";
 
 import { ColorPickerColor } from "@shared/ui/color-pickers";
 import { Divider } from "@shared/ui/dividers";
@@ -49,7 +51,7 @@ export const AccountOverviewPage = () => {
     throw new Error("Impossible account id");
   }
 
-  const transactions = useTransactions();
+  const transactions = useBalanceTransactions();
   const { currencies } = useCurrenciesStore();
   const { getAccount } = useAccountsStore((state) => ({
     getAccount: state.getAccount,

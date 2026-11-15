@@ -5,6 +5,7 @@ import {
   getConvertedCurrenciesTotal,
   getCurrencyBalance,
   targetDisplayCurrency,
+  useBalanceTransactions,
 } from "@features/statistics";
 
 import { useAccountsStore } from "@entities/account";
@@ -15,7 +16,6 @@ import {
   useCurrenciesStore,
 } from "@entities/currency";
 import { useCurrencyConversionStore } from "@entities/currency-conversion";
-import { useTransactions } from "@entities/transaction";
 
 import { FloatingActionButton } from "@shared/ui/buttons";
 import { PlusIcon } from "@shared/ui/icons";
@@ -24,7 +24,7 @@ import { Link } from "@shared/ui/links";
 export const CurrenciesTabPanel = () => {
   const { currencies } = useCurrenciesStore();
   const { accounts } = useAccountsStore();
-  const transactions = useTransactions();
+  const transactions = useBalanceTransactions();
   const { currencyCodes, rates } = useCurrencyConversionStore();
 
   const bynPerUnit = rates?.bynPerUnit ?? {};

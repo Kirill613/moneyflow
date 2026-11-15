@@ -1,4 +1,8 @@
 export {
+  excludeHiddenTransactions,
+  useBalanceTransactions,
+} from "./model/use-balance-transactions";
+export {
   getAccountBalance,
   getCurrencyBalance,
   getCurrenciesStatistics,

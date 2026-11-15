@@ -1,7 +1,10 @@
 import { Tab as HeadlessTab } from "@headlessui/react";
 import { twMerge } from "tailwind-merge";
 
-import { getAccountBalance } from "@features/statistics";
+import {
+  getAccountBalance,
+  useBalanceTransactions,
+} from "@features/statistics";
 
 import { AccountCardList, useAccountsStore } from "@entities/account";
 import {
@@ -9,7 +12,6 @@ import {
   formatAmountPrecision,
   useCurrenciesStore,
 } from "@entities/currency";
-import { useTransactions } from "@entities/transaction";
 
 import { FloatingActionButton } from "@shared/ui/buttons";
 import { PlusIcon } from "@shared/ui/icons";
@@ -20,7 +22,7 @@ export const AccountsTabPanel = () => {
   const {
     currencies: { currencies },
   } = useCurrenciesStore();
-  const transactions = useTransactions();
+  const transactions = useBalanceTransactions();
 
   return (
     <HeadlessTab.Panel as="div" className="text-text">
