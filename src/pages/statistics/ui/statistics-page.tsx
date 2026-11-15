@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 
@@ -27,6 +27,7 @@ import { TransactionType, useTransactions } from "@entities/transaction";
 
 import { Divider } from "@shared/ui/dividers";
 import { PageLayout } from "@shared/ui/layouts";
+import { Toggle } from "@shared/ui/toggles";
 
 import { useStatisticsFiltersStore } from "../model/store";
 
@@ -64,6 +65,15 @@ export const StatisticsPage = () => {
       ),
     [transactions, filters, accounts, expenseCategories, incomeCategories],
   );
+  const [includeHidden, setIncludeHidden] = useState(false);
+  const hasHiddenCategories = useMemo(
+    () =>
+      [
+        ...Object.values(expenseCategories),
+        ...Object.values(incomeCategories),
+      ].some((category) => category.excludedFromStatistics),
+    [expenseCategories, incomeCategories],
+  );
   const statistics = useMemo(
     () =>
       netSameTitledCategories(
@@ -72,11 +82,18 @@ export const StatisticsPage = () => {
           expenseCategories,
           incomeCategories,
           filteredTransactions,
+          { ignoreExclusions: includeHidden },
         ),
         expenseCategories,
         incomeCategories,
       ),
-    [accounts, expenseCategories, incomeCategories, filteredTransactions],
+    [
+      accounts,
+      expenseCategories,
+      incomeCategories,
+      filteredTransactions,
+      includeHidden,
+    ],
   );
 
   type BreakdownTransaction = {
@@ -92,7 +109,8 @@ export const StatisticsPage = () => {
     const counted: BreakdownTransaction[] = [];
     const excluded: BreakdownTransaction[] = [];
     for (const transaction of transactions) {
-      (isTransactionExcludedFromStatistics(categories, transaction)
+      (!includeHidden &&
+      isTransactionExcludedFromStatistics(categories, transaction)
         ? excluded
         : counted
       ).push(transaction);
@@ -108,7 +126,7 @@ export const StatisticsPage = () => {
         expenseCategories,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filteredTransactions, expenseCategories],
+    [filteredTransactions, expenseCategories, includeHidden],
   );
   const incomeTransactions = useMemo(
     () =>
@@ -119,7 +137,7 @@ export const StatisticsPage = () => {
         incomeCategories,
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filteredTransactions, incomeCategories],
+    [filteredTransactions, incomeCategories, includeHidden],
   );
 
   const buildBreakdown = (
@@ -186,6 +204,14 @@ export const StatisticsPage = () => {
           />
         }
       />
+      {hasHiddenCategories && (
+        <div className="flex items-center justify-between gap-3 px-1">
+          <span className="text-sm font-bold text-text">
+            Учитывать скрытые категории
+          </span>
+          <Toggle checked={includeHidden} onChange={setIncludeHidden} />
+        </div>
+      )}
       {filteredTransactions.length ? (
         <main className="flex flex-col gap-4">
           {currenciesOrder.map((currencyId) => {

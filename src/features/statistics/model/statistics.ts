@@ -172,11 +172,17 @@ export const getCurrencyBalance = (
   return balance.toString();
 };
 
+export interface CurrenciesStatisticsOptions {
+  // count hidden categories and transactions as if nothing were excluded
+  ignoreExclusions?: boolean;
+}
+
 export function getCurrenciesStatistics(
   accounts: AccountsForStatistics,
   expenseCategories: CategoriesForStatistics,
   incomeCategories: CategoriesForStatistics,
   transactions: TransactionForStatistics[],
+  options?: CurrenciesStatisticsOptions,
 ): CurrenciesStatistics {
   const statistics: Record<
     CurrencyID,
@@ -227,6 +233,7 @@ export function getCurrenciesStatistics(
           (statistics[currencyId] = emptyCurrencyStatistics());
 
         if (
+          !options?.ignoreExclusions &&
           isTransactionExcludedFromStatistics(expenseCategories, transaction)
         ) {
           const excludedCategory =
@@ -267,6 +274,7 @@ export function getCurrenciesStatistics(
           (statistics[currencyId] = emptyCurrencyStatistics());
 
         if (
+          !options?.ignoreExclusions &&
           isTransactionExcludedFromStatistics(incomeCategories, transaction)
         ) {
           const excludedCategory =

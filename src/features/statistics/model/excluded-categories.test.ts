@@ -112,3 +112,26 @@ describe("per-transaction excludedFromStatistics override", () => {
     ]);
   });
 });
+
+describe("ignoreExclusions option", () => {
+  it("counts everything as if no exclusions existed", () => {
+    const statistics = getCurrenciesStatistics(
+      accounts,
+      expenseCategories,
+      incomeCategories,
+      [
+        expense("car", "100"),
+        expense("kx1", "30"),
+        { ...expense("home", "7"), excludedFromStatistics: true },
+        expense("dad", "500"),
+      ],
+      { ignoreExclusions: true },
+    );
+    const byn = statistics.byn;
+    expect(byn.expenseAmount).toBe("637");
+    expect(byn.excludedExpenseCategories).toBeUndefined();
+    expect(
+      byn.expenseRootCategories.categories.map((c) => c.categoryId),
+    ).toEqual(["dad", "car", "home"]);
+  });
+});
