@@ -46,8 +46,6 @@ const categoryTypeToAmountPrefix: Record<CategoryType, string> = {
   income: "+",
 };
 
-const NOT_COUNTED_LABEL = "не считается";
-
 export function CategoryStatisticsLine({
   category: { id, title, amount, percentage, breakdown, excluded },
   categoryType,
@@ -72,11 +70,6 @@ export function CategoryStatisticsLine({
       <div className="flex justify-between items-center gap-4 text-sm font-bold">
         <span className="flex items-center gap-1.5 text-subtext0">
           {title}
-          {excluded && (
-            <span className="text-[10px] font-medium text-overlay0">
-              {NOT_COUNTED_LABEL}
-            </span>
-          )}
           {breakdown && breakdown.length > 0 && (
             <DownChevronIcon
               size="xs"
@@ -125,14 +118,7 @@ export function CategoryStatisticsLine({
           {breakdown.map((item) => {
             const row = (
               <>
-                <span className="flex items-center gap-1.5 text-subtext0">
-                  {item.title}
-                  {item.excluded && (
-                    <span className="text-[10px] font-medium text-overlay0">
-                      {NOT_COUNTED_LABEL}
-                    </span>
-                  )}
-                </span>
+                <span className="text-subtext0">{item.title}</span>
                 <span
                   className={twMerge(
                     "font-bold",
