@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { useAccountsStore } from "@entities/account";
 import {
   createCategoryString,
+  getTopExcludedCategory,
   useExpenseCategoriesStore,
   useIncomeCategoriesStore,
 } from "@entities/category";
@@ -43,6 +44,13 @@ export const TransactionListGroup = ({
     transactionGroup.transactions,
   );
 
+  const isHidden = (
+    categories: typeof expenseCategories | typeof incomeCategories,
+    transaction: { categoryId: string; excludedFromStatistics?: boolean },
+  ) =>
+    transaction.excludedFromStatistics ??
+    getTopExcludedCategory(categories, transaction.categoryId) !== null;
+
   const renderTransaction = (transaction: Transaction) => {
     switch (transaction.type) {
       case TransactionType.expense: {
@@ -51,6 +59,7 @@ export const TransactionListGroup = ({
         return (
           <ExpenseCard
             key={transaction.id}
+            excluded={isHidden(expenseCategories, transaction)}
             expense={{
               ...transaction,
               formattedAmount: createCurrencyAmountString({
@@ -76,6 +85,7 @@ export const TransactionListGroup = ({
         return (
           <IncomeCard
             key={transaction.id}
+            excluded={isHidden(incomeCategories, transaction)}
             income={{
               ...transaction,
               formattedAmount: createCurrencyAmountString({

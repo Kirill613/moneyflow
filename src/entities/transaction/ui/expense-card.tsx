@@ -16,9 +16,11 @@ interface ExpenseCardExpense {
 
 interface ExpenseCardProps {
   expense: ExpenseCardExpense;
+  // the transaction does not count towards statistics: muted colors
+  excluded?: boolean;
 }
 
-export const ExpenseCard = ({ expense }: ExpenseCardProps) => {
+export const ExpenseCard = ({ expense, excluded }: ExpenseCardProps) => {
   const formattedAmount = createExpenseAmountString(expense.formattedAmount);
   return (
     <Link to={`/expenses/${expense.id}`}>
@@ -28,8 +30,8 @@ export const ExpenseCard = ({ expense }: ExpenseCardProps) => {
         time={expense.time}
         firstProperty={{ title: "Category", value: expense.categoryTitle }}
         secondProperty={{ title: "Account", value: expense.accountTitle }}
-        className="border-red"
-        amountClassName="text-red"
+        className={excluded ? "border-overlay0" : "border-red"}
+        amountClassName={excluded ? "text-overlay1" : "text-red"}
       />
     </Link>
   );

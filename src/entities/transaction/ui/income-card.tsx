@@ -16,9 +16,11 @@ interface IncomeCardIncome {
 
 interface IncomeCardProps {
   income: IncomeCardIncome;
+  // the transaction does not count towards statistics: muted colors
+  excluded?: boolean;
 }
 
-export const IncomeCard = ({ income }: IncomeCardProps) => {
+export const IncomeCard = ({ income, excluded }: IncomeCardProps) => {
   const formattedAmount = createIncomeAmountString(income.formattedAmount);
   return (
     <Link to={`/incomes/${income.id}`}>
@@ -28,8 +30,8 @@ export const IncomeCard = ({ income }: IncomeCardProps) => {
         time={income.time}
         firstProperty={{ title: "Category", value: income.categoryTitle }}
         secondProperty={{ title: "Account", value: income.accountTitle }}
-        className="border-green"
-        amountClassName="text-green"
+        className={excluded ? "border-overlay0" : "border-green"}
+        amountClassName={excluded ? "text-overlay1" : "text-green"}
       />
     </Link>
   );
