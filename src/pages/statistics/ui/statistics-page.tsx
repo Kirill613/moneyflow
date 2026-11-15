@@ -19,6 +19,8 @@ import {
 
 import { useAccountsStore } from "@entities/account";
 import {
+  createCategoryString,
+  getRootCategory,
   useExpenseCategoriesStore,
   useIncomeCategoriesStore,
 } from "@entities/category";
@@ -223,17 +225,41 @@ export const StatisticsPage = () => {
             // excluded categories shown greyed-out inside their own root line
             // breakdowns (when nested) or as extra rows in the section (when
             // they are roots themselves)
-            const excludedExpense = (
-              currencyStatistics.excludedExpenseCategories?.categories ?? []
-            ).filter(
-              (category) =>
-                expenseCategories[category.categoryId]?.parentId === null,
+            const countedExpenseRoots = new Set(
+              currencyStatistics.expenseRootCategories.categories.map(
+                (category) => category.categoryId,
+              ),
             );
-            const excludedIncome = (
-              currencyStatistics.excludedIncomeCategories?.categories ?? []
-            ).filter(
-              (category) =>
-                incomeCategories[category.categoryId]?.parentId === null,
+            const countedIncomeRoots = new Set(
+              currencyStatistics.incomeRootCategories.categories.map(
+                (category) => category.categoryId,
+              ),
+            );
+            // a hidden root gets its own grey row; a hidden subcategory shows
+            // inside its root's breakdown, unless that root has no counted row
+            // in this currency - then it also gets its own grey row
+            const pickExcluded = (
+              excluded: { categoryId: string; amount: string }[],
+              categories: typeof expenseCategories,
+              countedRoots: Set<string>,
+            ) =>
+              excluded.filter((category) => {
+                const entity = categories[category.categoryId];
+                if (!entity) return false;
+                if (entity.parentId === null) return true;
+                return !countedRoots.has(
+                  getRootCategory(categories, category.categoryId).id,
+                );
+              });
+            const excludedExpense = pickExcluded(
+              currencyStatistics.excludedExpenseCategories?.categories ?? [],
+              expenseCategories,
+              countedExpenseRoots,
+            );
+            const excludedIncome = pickExcluded(
+              currencyStatistics.excludedIncomeCategories?.categories ?? [],
+              incomeCategories,
+              countedIncomeRoots,
             );
 
             if (
@@ -276,8 +302,10 @@ export const StatisticsPage = () => {
                       excludedCategories={excludedExpense.map((category) => ({
                         id: category.categoryId,
                         amount: category.amount,
-                        title:
-                          expenseCategories[category.categoryId]?.title ?? "",
+                        title: createCategoryString(
+                          expenseCategories,
+                          category.categoryId,
+                        ),
                         breakdown: buildBreakdown(
                           category.categoryId,
                           expenseCategories,
@@ -312,8 +340,10 @@ export const StatisticsPage = () => {
                       excludedCategories={excludedIncome.map((category) => ({
                         id: category.categoryId,
                         amount: category.amount,
-                        title:
-                          incomeCategories[category.categoryId]?.title ?? "",
+                        title: createCategoryString(
+                          incomeCategories,
+                          category.categoryId,
+                        ),
                         breakdown: buildBreakdown(
                           category.categoryId,
                           incomeCategories,
