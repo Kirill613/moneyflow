@@ -1,5 +1,5 @@
 import { SplashScreen } from "@capacitor/splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useAccountsStore } from "@entities/account";
 import {
@@ -18,7 +18,8 @@ import {
 import { migrator } from "@shared/api/migrations";
 import { versionApi } from "@shared/api/version-api";
 
-export const useLoadState = () => {
+export const useLoadState = (): boolean => {
+  const [loaded, setLoaded] = useState(false);
   const { fetchCurrencies } = useCurrenciesStore((state) => ({
     fetchCurrencies: state.fetchCurrencies,
   }));
@@ -59,6 +60,7 @@ export const useLoadState = () => {
       await fetchTransfers();
       await fetchSettings();
       await fetchCurrencyConversion();
+      setLoaded(true);
       await SplashScreen.hide();
     })();
   }, [
@@ -72,4 +74,6 @@ export const useLoadState = () => {
     fetchSettings,
     fetchCurrencyConversion,
   ]);
+
+  return loaded;
 };

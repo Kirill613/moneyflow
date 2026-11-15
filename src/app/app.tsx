@@ -130,8 +130,14 @@ const router = createBrowserRouter([
 ]);
 
 export const App = () => {
-  useLoadState();
+  const loaded = useLoadState();
   useTextSize();
+
+  if (!loaded) {
+    // Rendering pages before the stores are hydrated crashes views that
+    // join transactions with accounts/categories on a hard reload.
+    return null;
+  }
 
   return (
     <BackButtonContextProvider>
