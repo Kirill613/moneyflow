@@ -24,5 +24,4 @@ export type {
   CurrenciesStatistics,
 } from "./model/statistics";
 export { CategoriesStatisticsSection } from "./ui/categories-statistics-section";
-export { ExcludedStatisticsSection } from "./ui/excluded-statistics-section";
 export { CurrencyTotalCard } from "./ui/currency-total-card";

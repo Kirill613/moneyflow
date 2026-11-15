@@ -20,6 +20,14 @@ interface CategoriesStatisticsSectionProps {
     percentage: string;
     breakdown?: CategoryStatisticsBreakdownItem[];
   }[];
+  // categories marked "Не учитывать в статистике": rendered greyed-out after
+  // the counted ones and not part of totalAmount
+  excludedCategories?: {
+    id: string;
+    title: string;
+    amount: string;
+    breakdown?: CategoryStatisticsBreakdownItem[];
+  }[];
   categoryType: CategoryType;
   totalAmount: string;
   currency: Currency;
@@ -42,6 +50,7 @@ const categoryTypeToAmountPrefix: Record<CategoryType, string> = {
 
 export function CategoriesStatisticsSection({
   categories,
+  excludedCategories = [],
   categoryType,
   totalAmount,
   currency,
@@ -62,6 +71,14 @@ export function CategoriesStatisticsSection({
             <CategoryStatisticsLine
               key={category.id}
               category={category}
+              categoryType={categoryType}
+              currency={currency}
+            />
+          ))}
+          {excludedCategories.map((category) => (
+            <CategoryStatisticsLine
+              key={category.id}
+              category={{ ...category, percentage: "0.00", excluded: true }}
               categoryType={categoryType}
               currency={currency}
             />

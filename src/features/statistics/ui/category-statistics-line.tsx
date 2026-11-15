@@ -18,6 +18,7 @@ export interface CategoryStatisticsBreakdownItem {
   id: string | null;
   title: string;
   amount: string;
+  excluded?: boolean;
 }
 
 interface CategoryStatisticsLineProps {
@@ -27,6 +28,9 @@ interface CategoryStatisticsLineProps {
     amount: string;
     percentage: string;
     breakdown?: CategoryStatisticsBreakdownItem[];
+    // the category is marked "Не учитывать в статистике": it is shown for
+    // reference only and its amount is not part of the section totals
+    excluded?: boolean;
   };
   categoryType: CategoryType;
   currency: Currency;
@@ -42,8 +46,10 @@ const categoryTypeToAmountPrefix: Record<CategoryType, string> = {
   income: "+",
 };
 
+const NOT_COUNTED_LABEL = "не считается";
+
 export function CategoryStatisticsLine({
-  category: { id, title, amount, percentage, breakdown },
+  category: { id, title, amount, percentage, breakdown, excluded },
   categoryType,
   currency,
 }: CategoryStatisticsLineProps) {
@@ -57,13 +63,20 @@ export function CategoryStatisticsLine({
 
   const formattedPercentage =
     percentage.length < 5 ? `0${percentage}%` : `${percentage}%`;
-  const amountClassName = categoryTypeToClassName[categoryType];
+  const amountClassName = excluded
+    ? "text-overlay1"
+    : categoryTypeToClassName[categoryType];
 
   const line = (
     <>
       <div className="flex justify-between items-center gap-4 text-sm font-bold">
         <span className="flex items-center gap-1.5 text-subtext0">
           {title}
+          {excluded && (
+            <span className="text-[10px] font-medium text-overlay0">
+              {NOT_COUNTED_LABEL}
+            </span>
+          )}
           {breakdown && breakdown.length > 0 && (
             <DownChevronIcon
               size="xs"
@@ -76,12 +89,14 @@ export function CategoryStatisticsLine({
         </span>
         <span className={amountClassName}>{formatAmount(amount)}</span>
       </div>
-      <div className="flex items-center gap-4">
-        <ProgressBar progress={percentage} />
-        <span className="text-xs text-subtext0 font-medium">
-          {formattedPercentage}
-        </span>
-      </div>
+      {!excluded && (
+        <div className="flex items-center gap-4">
+          <ProgressBar progress={percentage} />
+          <span className="text-xs text-subtext0 font-medium">
+            {formattedPercentage}
+          </span>
+        </div>
+      )}
     </>
   );
 
@@ -110,8 +125,22 @@ export function CategoryStatisticsLine({
           {breakdown.map((item) => {
             const row = (
               <>
-                <span className="text-subtext0">{item.title}</span>
-                <span className={twMerge("font-bold", amountClassName)}>
+                <span className="flex items-center gap-1.5 text-subtext0">
+                  {item.title}
+                  {item.excluded && (
+                    <span className="text-[10px] font-medium text-overlay0">
+                      {NOT_COUNTED_LABEL}
+                    </span>
+                  )}
+                </span>
+                <span
+                  className={twMerge(
+                    "font-bold",
+                    item.excluded || excluded
+                      ? "text-overlay1"
+                      : amountClassName,
+                  )}
+                >
                   {formatAmount(item.amount)}
                 </span>
               </>

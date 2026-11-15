@@ -11,10 +11,8 @@ import {
 import {
   CategoriesStatisticsSection,
   CurrencyTotalCard,
-  ExcludedStatisticsSection,
   getCurrenciesStatistics,
   getCurrencyCategoryBreakdown,
-  getTopExcludedCategory,
   netSameTitledCategories,
 } from "@features/statistics";
 
@@ -82,29 +80,17 @@ export const StatisticsPage = () => {
 
   const expenseTransactions = useMemo(
     () =>
-      (
-        filteredTransactions.filter(
-          (transaction) => transaction.type === TransactionType.expense,
-        ) as { categoryId: string; accountId: string; amount: string }[]
-      ).filter(
-        (transaction) =>
-          getTopExcludedCategory(expenseCategories, transaction.categoryId) ===
-          null,
-      ),
-    [filteredTransactions, expenseCategories],
+      filteredTransactions.filter(
+        (transaction) => transaction.type === TransactionType.expense,
+      ) as { categoryId: string; accountId: string; amount: string }[],
+    [filteredTransactions],
   );
   const incomeTransactions = useMemo(
     () =>
-      (
-        filteredTransactions.filter(
-          (transaction) => transaction.type === TransactionType.income,
-        ) as { categoryId: string; accountId: string; amount: string }[]
-      ).filter(
-        (transaction) =>
-          getTopExcludedCategory(incomeCategories, transaction.categoryId) ===
-          null,
-      ),
-    [filteredTransactions, incomeCategories],
+      filteredTransactions.filter(
+        (transaction) => transaction.type === TransactionType.income,
+      ) as { categoryId: string; accountId: string; amount: string }[],
+    [filteredTransactions],
   );
 
   const fromDateString = filters.fromDateTimeRange?.toLocaleString({
@@ -152,10 +138,21 @@ export const StatisticsPage = () => {
             }
 
             const currencyStatistics = statistics[currencyId];
-            const excludedExpense =
-              currencyStatistics.excludedExpenseCategories?.categories ?? [];
-            const excludedIncome =
-              currencyStatistics.excludedIncomeCategories?.categories ?? [];
+            // excluded categories shown greyed-out inside their own root line
+            // breakdowns (when nested) or as extra rows in the section (when
+            // they are roots themselves)
+            const excludedExpense = (
+              currencyStatistics.excludedExpenseCategories?.categories ?? []
+            ).filter(
+              (category) =>
+                expenseCategories[category.categoryId]?.parentId === null,
+            );
+            const excludedIncome = (
+              currencyStatistics.excludedIncomeCategories?.categories ?? []
+            ).filter(
+              (category) =>
+                incomeCategories[category.categoryId]?.parentId === null,
+            );
 
             if (
               currencyStatistics.expenseAmount === "0" &&
@@ -186,14 +183,28 @@ export const StatisticsPage = () => {
                       amount={currencyStatistics.incomeAmount}
                     />
                   </div>
-                  {currencyStatistics.expenseRootCategories.categories
-                    .length ? (
+                  {currencyStatistics.expenseRootCategories.categories.length ||
+                  excludedExpense.length ? (
                     <CategoriesStatisticsSection
                       categoryType="expense"
                       totalAmount={
                         currencyStatistics.expenseRootCategories.totalAmount
                       }
                       currency={currency}
+                      excludedCategories={excludedExpense.map((category) => ({
+                        id: category.categoryId,
+                        amount: category.amount,
+                        title:
+                          expenseCategories[category.categoryId]?.title ?? "",
+                        breakdown: getCurrencyCategoryBreakdown(
+                          category.categoryId,
+                          expenseCategories,
+                          expenseTransactions,
+                          accounts,
+                          currencyId,
+                          "Без подкатегории",
+                        ),
+                      }))}
                       categories={currencyStatistics.expenseRootCategories.categories.map(
                         (category) => ({
                           id: category.categoryId,
@@ -212,13 +223,28 @@ export const StatisticsPage = () => {
                       )}
                     />
                   ) : null}
-                  {currencyStatistics.incomeRootCategories.categories.length ? (
+                  {currencyStatistics.incomeRootCategories.categories.length ||
+                  excludedIncome.length ? (
                     <CategoriesStatisticsSection
                       categoryType="income"
                       totalAmount={
                         currencyStatistics.incomeRootCategories.totalAmount
                       }
                       currency={currency}
+                      excludedCategories={excludedIncome.map((category) => ({
+                        id: category.categoryId,
+                        amount: category.amount,
+                        title:
+                          incomeCategories[category.categoryId]?.title ?? "",
+                        breakdown: getCurrencyCategoryBreakdown(
+                          category.categoryId,
+                          incomeCategories,
+                          incomeTransactions,
+                          accounts,
+                          currencyId,
+                          "Без подкатегории",
+                        ),
+                      }))}
                       categories={currencyStatistics.incomeRootCategories.categories.map(
                         (category) => ({
                           id: category.categoryId,
@@ -237,20 +263,6 @@ export const StatisticsPage = () => {
                       )}
                     />
                   ) : null}
-                  <ExcludedStatisticsSection
-                    currency={currency}
-                    expenseCategories={excludedExpense.map((category) => ({
-                      id: category.categoryId,
-                      amount: category.amount,
-                      title:
-                        expenseCategories[category.categoryId]?.title ?? "",
-                    }))}
-                    incomeCategories={excludedIncome.map((category) => ({
-                      id: category.categoryId,
-                      amount: category.amount,
-                      title: incomeCategories[category.categoryId]?.title ?? "",
-                    }))}
-                  />
                 </div>
                 <Divider className="group-last:hidden" />
               </div>

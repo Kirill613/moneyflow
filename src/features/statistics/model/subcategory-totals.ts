@@ -1,5 +1,7 @@
 import { Decimal } from "decimal.js";
 
+import { getTopExcludedCategory } from "./statistics";
+
 export interface SubcategoryTotalsCategory {
   id: string;
   parentId: string | null;
@@ -10,6 +12,9 @@ export interface CategoryBreakdownItem {
   id: string | null;
   title: string;
   amount: string;
+  // true when the row's subtree is marked excludedFromStatistics deeper than
+  // the parent itself: shown for reference, not counted in the parent's total
+  excluded?: boolean;
 }
 
 export interface SubcategoryTotalsTransaction {
@@ -101,15 +106,21 @@ export const getCurrencyCategoryBreakdown = (
     accounts,
   );
 
+  const parentExcluded = getTopExcludedCategory(categories, categoryId);
   const children: CategoryBreakdownItem[] = [];
   for (const [childId, currencyTotals] of Object.entries(totals.children)) {
     const amount = currencyTotals[currencyId];
     if (typeof amount === "undefined") continue;
-    children.push({
+    const item: CategoryBreakdownItem = {
       id: childId,
       title: categories[childId]?.title ?? "",
       amount,
-    });
+    };
+    const childExcluded = getTopExcludedCategory(categories, childId);
+    if (childExcluded !== null && childExcluded !== parentExcluded) {
+      item.excluded = true;
+    }
+    children.push(item);
   }
   if (children.length === 0) {
     return [];
