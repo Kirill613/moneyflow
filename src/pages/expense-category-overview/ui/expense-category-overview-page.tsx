@@ -81,17 +81,25 @@ export const ExpenseCategoryOverviewPage = () => {
   const directAmounts = formatTotals(totals.direct);
 
   const methods = useForm<CreateExpenseCategoryFormData>({
-    defaultValues: category,
+    defaultValues: category && {
+      title: category.title,
+      excludedFromStatistics: category.excludedFromStatistics ?? false,
+    },
     resolver: zodResolver(createExpenseCategoryFormSchema),
   });
   const { reset } = methods;
 
   useEffect(() => {
-    reset(category);
+    if (category) {
+      reset({
+        title: category.title,
+        excludedFromStatistics: category.excludedFromStatistics ?? false,
+      });
+    }
   }, [id, category, reset]);
 
   const beforeDelete = () => {
-    reset({ title: "" });
+    reset({ title: "", excludedFromStatistics: false });
   };
 
   return (

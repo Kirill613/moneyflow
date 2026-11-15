@@ -27,7 +27,7 @@ export const CreateExpenseCategoryForm = ({
 }: CreateExpenseCategoryFormProps) => {
   const navigate = useNavigate();
   const methods = useForm<CreateExpenseCategoryFormData>({
-    defaultValues: { title: "" },
+    defaultValues: { title: "", excludedFromStatistics: false },
     resolver: zodResolver(createExpenseCategoryFormSchema),
   });
   const { handleSubmit, formState } = methods;

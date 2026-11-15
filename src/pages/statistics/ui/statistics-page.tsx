@@ -11,8 +11,10 @@ import {
 import {
   CategoriesStatisticsSection,
   CurrencyTotalCard,
+  ExcludedStatisticsSection,
   getCurrenciesStatistics,
   getCurrencyCategoryBreakdown,
+  getTopExcludedCategory,
   netSameTitledCategories,
 } from "@features/statistics";
 
@@ -80,17 +82,29 @@ export const StatisticsPage = () => {
 
   const expenseTransactions = useMemo(
     () =>
-      filteredTransactions.filter(
-        (transaction) => transaction.type === TransactionType.expense,
-      ) as { categoryId: string; accountId: string; amount: string }[],
-    [filteredTransactions],
+      (
+        filteredTransactions.filter(
+          (transaction) => transaction.type === TransactionType.expense,
+        ) as { categoryId: string; accountId: string; amount: string }[]
+      ).filter(
+        (transaction) =>
+          getTopExcludedCategory(expenseCategories, transaction.categoryId) ===
+          null,
+      ),
+    [filteredTransactions, expenseCategories],
   );
   const incomeTransactions = useMemo(
     () =>
-      filteredTransactions.filter(
-        (transaction) => transaction.type === TransactionType.income,
-      ) as { categoryId: string; accountId: string; amount: string }[],
-    [filteredTransactions],
+      (
+        filteredTransactions.filter(
+          (transaction) => transaction.type === TransactionType.income,
+        ) as { categoryId: string; accountId: string; amount: string }[]
+      ).filter(
+        (transaction) =>
+          getTopExcludedCategory(incomeCategories, transaction.categoryId) ===
+          null,
+      ),
+    [filteredTransactions, incomeCategories],
   );
 
   const fromDateString = filters.fromDateTimeRange?.toLocaleString({
@@ -138,10 +152,16 @@ export const StatisticsPage = () => {
             }
 
             const currencyStatistics = statistics[currencyId];
+            const excludedExpense =
+              currencyStatistics.excludedExpenseCategories?.categories ?? [];
+            const excludedIncome =
+              currencyStatistics.excludedIncomeCategories?.categories ?? [];
 
             if (
               currencyStatistics.expenseAmount === "0" &&
-              currencyStatistics.incomeAmount === "0"
+              currencyStatistics.incomeAmount === "0" &&
+              excludedExpense.length === 0 &&
+              excludedIncome.length === 0
             ) {
               return null;
             }
@@ -217,6 +237,20 @@ export const StatisticsPage = () => {
                       )}
                     />
                   ) : null}
+                  <ExcludedStatisticsSection
+                    currency={currency}
+                    expenseCategories={excludedExpense.map((category) => ({
+                      id: category.categoryId,
+                      amount: category.amount,
+                      title:
+                        expenseCategories[category.categoryId]?.title ?? "",
+                    }))}
+                    incomeCategories={excludedIncome.map((category) => ({
+                      id: category.categoryId,
+                      amount: category.amount,
+                      title: incomeCategories[category.categoryId]?.title ?? "",
+                    }))}
+                  />
                 </div>
                 <Divider className="group-last:hidden" />
               </div>

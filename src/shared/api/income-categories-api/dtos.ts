@@ -3,6 +3,7 @@ export type IncomeCategoryID = string;
 export interface CreateIncomeCategoryDTO {
   title: string;
   parentId: IncomeCategoryID | null;
+  excludedFromStatistics?: boolean;
 }
 
 export type UpdateIncomeCategoryDTO = CreateIncomeCategoryDTO;

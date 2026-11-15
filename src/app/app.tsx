@@ -26,7 +26,6 @@ import { RootLayoutPage } from "@pages/root-layout";
 import { SettingsPage } from "@pages/settings";
 import { StatisticsPage } from "@pages/statistics";
 import { TextSizeSettingsPage } from "@pages/text-size-settings";
-import { TotalStatisticsPage } from "@pages/total-statistics";
 import { TransactionsPage } from "@pages/transactions";
 import { TransferOverviewPage } from "@pages/transfer-overview";
 
@@ -46,7 +45,6 @@ const router = createBrowserRouter([
         children: [
           { path: "/transactions", element: <TransactionsPage /> },
           { path: "/statistics", element: <StatisticsPage /> },
-          { path: "/total-statistics", element: <TotalStatisticsPage /> },
           { path: "/balances", element: <BalancesPage /> },
           { path: "/debts", element: <DebtsPage /> },
           {

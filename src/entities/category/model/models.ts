@@ -5,6 +5,7 @@ export type ExpenseCategoryID = string;
 export interface CreateExpenseCategory {
   title: string;
   parentId: ExpenseCategoryID | null;
+  excludedFromStatistics?: boolean;
 }
 
 export type UpdateExpenseCategory = CreateExpenseCategory;
@@ -21,6 +22,7 @@ export type IncomeCategoryID = string;
 export interface CreateIncomeCategory {
   title: string;
   parentId: IncomeCategoryID | null;
+  excludedFromStatistics?: boolean;
 }
 
 export type UpdateIncomeCategory = CreateIncomeCategory;

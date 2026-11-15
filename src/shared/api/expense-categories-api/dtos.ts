@@ -3,6 +3,7 @@ export type ExpenseCategoryID = string;
 export interface CreateExpenseCategoryDTO {
   title: string;
   parentId: ExpenseCategoryID | null;
+  excludedFromStatistics?: boolean;
 }
 
 export type UpdateExpenseCategoryDTO = CreateExpenseCategoryDTO;

@@ -2,12 +2,9 @@ export {
   getAccountBalance,
   getCurrencyBalance,
   getCurrenciesStatistics,
+  getTopExcludedCategory,
 } from "./model/statistics";
 export { netSameTitledCategories } from "./model/net-same-titled-categories";
-export {
-  getConvertedStatistics,
-  type ConvertedStatisticsResult,
-} from "./model/get-converted-statistics";
 export {
   getConvertedCurrenciesTotal,
   type ConvertedCurrenciesTotalResult,
@@ -27,5 +24,5 @@ export type {
   CurrenciesStatistics,
 } from "./model/statistics";
 export { CategoriesStatisticsSection } from "./ui/categories-statistics-section";
+export { ExcludedStatisticsSection } from "./ui/excluded-statistics-section";
 export { CurrencyTotalCard } from "./ui/currency-total-card";
-export { TotalStatistics } from "./ui/total-statistics";

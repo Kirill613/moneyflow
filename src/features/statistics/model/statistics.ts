@@ -16,6 +16,7 @@ export interface AccountForStatistics {
 export interface CategoryForStatistics {
   id: ExpenseCategoryID | IncomeCategoryID;
   parentId: ExpenseCategoryID | IncomeCategoryID | null;
+  excludedFromStatistics?: boolean;
 }
 
 export type CategoriesForStatistics = Record<
@@ -72,7 +73,30 @@ export interface CurrencyStatistics {
   expenseAmount: string;
   expenseRootCategories: CategoriesStatistics;
   incomeRootCategories: CategoriesStatistics;
+  excludedExpenseCategories?: CategoriesStatistics;
+  excludedIncomeCategories?: CategoriesStatistics;
 }
+
+// The topmost category on the path from categoryId to its root that is marked
+// excludedFromStatistics, or null when the whole path is included. The topmost
+// one wins so everything under a hidden category is grouped under it.
+export const getTopExcludedCategory = (
+  categories: CategoriesForStatistics,
+  categoryId: string,
+): CategoryForStatistics | null => {
+  let excluded: CategoryForStatistics | null = null;
+  let current: CategoryForStatistics | undefined = categories[categoryId];
+  const visited = new Set<string>();
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
+    if (current.excludedFromStatistics) {
+      excluded = current;
+    }
+    current =
+      current.parentId === null ? undefined : categories[current.parentId];
+  }
+  return excluded;
+};
 
 export type CurrenciesStatistics = Record<CurrencyID, CurrencyStatistics>;
 
@@ -173,8 +197,25 @@ export function getCurrenciesStatistics(
         IncomeCategoryID,
         { id: string; amount: Decimal }
       >;
+      excludedExpenseCategories: Record<
+        ExpenseCategoryID,
+        { id: string; amount: Decimal }
+      >;
+      excludedIncomeCategories: Record<
+        IncomeCategoryID,
+        { id: string; amount: Decimal }
+      >;
     }
   > = {};
+
+  const emptyCurrencyStatistics = () => ({
+    incomeAmount: new Decimal("0"),
+    expenseAmount: new Decimal("0"),
+    expenseRootCategories: {},
+    incomeRootCategories: {},
+    excludedExpenseCategories: {},
+    excludedIncomeCategories: {},
+  });
 
   for (const transaction of transactions) {
     switch (transaction.type) {
@@ -189,12 +230,20 @@ export function getCurrenciesStatistics(
 
         const currencyStatistics =
           statistics[currencyId] ??
-          (statistics[currencyId] = {
-            incomeAmount: new Decimal("0"),
-            expenseAmount: new Decimal("0"),
-            expenseRootCategories: {},
-            incomeRootCategories: {},
-          });
+          (statistics[currencyId] = emptyCurrencyStatistics());
+
+        const excludedCategory = getTopExcludedCategory(
+          expenseCategories,
+          transaction.categoryId,
+        );
+        if (excludedCategory !== null) {
+          const excludedStatistics =
+            currencyStatistics.excludedExpenseCategories[excludedCategory.id] ??
+            (currencyStatistics.excludedExpenseCategories[excludedCategory.id] =
+              { id: excludedCategory.id, amount: new Decimal("0") });
+          excludedStatistics.amount = excludedStatistics.amount.plus(amount);
+          break;
+        }
 
         const categoryStatistics =
           currencyStatistics.expenseRootCategories[rootCategory.id] ??
@@ -220,12 +269,20 @@ export function getCurrenciesStatistics(
 
         const currencyStatistics =
           statistics[currencyId] ??
-          (statistics[currencyId] = {
-            expenseAmount: new Decimal("0"),
-            incomeAmount: new Decimal("0"),
-            expenseRootCategories: {},
-            incomeRootCategories: {},
-          });
+          (statistics[currencyId] = emptyCurrencyStatistics());
+
+        const excludedCategory = getTopExcludedCategory(
+          incomeCategories,
+          transaction.categoryId,
+        );
+        if (excludedCategory !== null) {
+          const excludedStatistics =
+            currencyStatistics.excludedIncomeCategories[excludedCategory.id] ??
+            (currencyStatistics.excludedIncomeCategories[excludedCategory.id] =
+              { id: excludedCategory.id, amount: new Decimal("0") });
+          excludedStatistics.amount = excludedStatistics.amount.plus(amount);
+          break;
+        }
 
         const categoryStatistics =
           currencyStatistics.incomeRootCategories[rootCategory.id] ??
@@ -250,20 +307,10 @@ export function getCurrenciesStatistics(
 
         const fromCurrencyStatistics =
           statistics[fromCurrencyId] ??
-          (statistics[fromCurrencyId] = {
-            expenseAmount: new Decimal("0"),
-            incomeAmount: new Decimal("0"),
-            expenseRootCategories: {},
-            incomeRootCategories: {},
-          });
+          (statistics[fromCurrencyId] = emptyCurrencyStatistics());
         const toCurrencyStatistics =
           statistics[toCurrencyId] ??
-          (statistics[toCurrencyId] = {
-            expenseAmount: new Decimal("0"),
-            incomeAmount: new Decimal("0"),
-            expenseRootCategories: {},
-            incomeRootCategories: {},
-          });
+          (statistics[toCurrencyId] = emptyCurrencyStatistics());
 
         if (fromCurrencyId === toCurrencyId) {
           const amountDiff = fromAmount.minus(toAmount);
@@ -284,48 +331,50 @@ export function getCurrenciesStatistics(
     }
   }
 
+  const finalizeSection = (
+    categories: Record<string, { id: string; amount: Decimal }>,
+  ): CategoriesStatistics => {
+    const totalAmount = Object.values(categories).reduce(
+      (total, { amount }) => total.plus(amount),
+      new Decimal("0"),
+    );
+    return {
+      totalAmount: totalAmount.toString(),
+      categories: Object.values(categories)
+        .sort((a, b) => b.amount.minus(a.amount).toNumber())
+        .map(({ id, amount }) => ({
+          categoryId: id,
+          amount: amount.toString(),
+          percentage: totalAmount.isZero()
+            ? "0.00"
+            : amount.div(totalAmount).mul(100).toFixed(2),
+        })),
+    };
+  };
+
   const result: CurrenciesStatistics = Object.fromEntries(
     Object.entries(statistics).map(([currencyId, currencyStatistics]) => {
-      const expenseRootCategoriesTotal = Object.values(
-        currencyStatistics.expenseRootCategories,
-      ).reduce((total, { amount }) => total.plus(amount), new Decimal("0"));
-      const incomeRootCategoriesTotal = Object.values(
-        currencyStatistics.incomeRootCategories,
-      ).reduce((total, { amount }) => total.plus(amount), new Decimal("0"));
-
-      return [
-        currencyId,
-        {
-          incomeAmount: currencyStatistics.incomeAmount.toString(),
-          expenseAmount: currencyStatistics.expenseAmount.toString(),
-          expenseRootCategories: {
-            totalAmount: expenseRootCategoriesTotal.toString(),
-            categories: Object.values(currencyStatistics.expenseRootCategories)
-              .sort((a, b) => b.amount.minus(a.amount).toNumber())
-              .map(({ id, amount }) => ({
-                categoryId: id,
-                amount: amount.toString(),
-                percentage: amount
-                  .div(expenseRootCategoriesTotal)
-                  .mul(100)
-                  .toFixed(2),
-              })),
-          },
-          incomeRootCategories: {
-            totalAmount: incomeRootCategoriesTotal.toString(),
-            categories: Object.values(currencyStatistics.incomeRootCategories)
-              .sort((a, b) => b.amount.minus(a.amount).toNumber())
-              .map(({ id, amount }) => ({
-                categoryId: id,
-                amount: amount.toString(),
-                percentage: amount
-                  .div(incomeRootCategoriesTotal)
-                  .mul(100)
-                  .toFixed(2),
-              })),
-          },
-        },
-      ];
+      const currencyResult: CurrencyStatistics = {
+        incomeAmount: currencyStatistics.incomeAmount.toString(),
+        expenseAmount: currencyStatistics.expenseAmount.toString(),
+        expenseRootCategories: finalizeSection(
+          currencyStatistics.expenseRootCategories,
+        ),
+        incomeRootCategories: finalizeSection(
+          currencyStatistics.incomeRootCategories,
+        ),
+      };
+      if (Object.keys(currencyStatistics.excludedExpenseCategories).length) {
+        currencyResult.excludedExpenseCategories = finalizeSection(
+          currencyStatistics.excludedExpenseCategories,
+        );
+      }
+      if (Object.keys(currencyStatistics.excludedIncomeCategories).length) {
+        currencyResult.excludedIncomeCategories = finalizeSection(
+          currencyStatistics.excludedIncomeCategories,
+        );
+      }
+      return [currencyId, currencyResult];
     }),
   );
 

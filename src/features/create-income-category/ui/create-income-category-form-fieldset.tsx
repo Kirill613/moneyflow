@@ -1,24 +1,46 @@
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import { z } from "zod";
 
 import { Input } from "@shared/ui/inputs";
+import { Toggle } from "@shared/ui/toggles";
 
 export interface CreateIncomeCategoryFormData {
   title: string;
+  excludedFromStatistics: boolean;
 }
 
 export const createIncomeCategoryFormSchema = z.object({
   title: z.string().nonempty(),
+  excludedFromStatistics: z.boolean(),
 });
 
 export const CreateIncomeCategoryFormFieldset = () => {
-  const { register } = useFormContext<CreateIncomeCategoryFormData>();
+  const { register, control } = useFormContext<CreateIncomeCategoryFormData>();
   return (
-    <Input
-      label="Title"
-      placeholder="e.g. Salary, Stipend, ..."
-      required
-      {...register("title")}
-    />
+    <div className="flex flex-col gap-6">
+      <Input
+        label="Title"
+        placeholder="e.g. Salary, Dividends, ..."
+        required
+        {...register("title")}
+      />
+      <Controller
+        control={control}
+        name="excludedFromStatistics"
+        render={({ field: { value, onChange } }) => (
+          <div className="flex items-center justify-between gap-3 px-4">
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-text">
+                Не учитывать в статистике
+              </span>
+              <span className="text-xs text-subtext0">
+                Суммы попадут в блок «Вне статистики»
+              </span>
+            </div>
+            <Toggle checked={value ?? false} onChange={onChange} />
+          </div>
+        )}
+      />
+    </div>
   );
 };

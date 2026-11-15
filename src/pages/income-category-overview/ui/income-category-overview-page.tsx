@@ -81,17 +81,25 @@ export const IncomeCategoryOverviewPage = () => {
   const directAmounts = formatTotals(totals.direct);
 
   const methods = useForm<CreateIncomeCategoryFormData>({
-    defaultValues: category,
+    defaultValues: category && {
+      title: category.title,
+      excludedFromStatistics: category.excludedFromStatistics ?? false,
+    },
     resolver: zodResolver(createIncomeCategoryFormSchema),
   });
   const { reset } = methods;
 
   useEffect(() => {
-    reset(category);
+    if (category) {
+      reset({
+        title: category.title,
+        excludedFromStatistics: category.excludedFromStatistics ?? false,
+      });
+    }
   }, [id, category, reset]);
 
   const beforeDelete = () => {
-    reset({ title: "" });
+    reset({ title: "", excludedFromStatistics: false });
   };
 
   return (
