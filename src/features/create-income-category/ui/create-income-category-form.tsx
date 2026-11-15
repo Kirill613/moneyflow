@@ -24,7 +24,11 @@ export const CreateIncomeCategoryForm = ({
 }: CreateIncomeCategoryFormProps) => {
   const navigate = useNavigate();
   const methods = useForm<CreateIncomeCategoryFormData>({
-    defaultValues: { title: "", excludedFromStatistics: false },
+    defaultValues: {
+      title: "",
+      excludedFromStatistics: false,
+      excludedFromBalance: false,
+    },
     resolver: zodResolver(createIncomeCategoryFormSchema),
   });
   const { handleSubmit, formState } = methods;

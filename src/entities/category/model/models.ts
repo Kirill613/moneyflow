@@ -6,6 +6,8 @@ export interface CreateExpenseCategory {
   title: string;
   parentId: ExpenseCategoryID | null;
   excludedFromStatistics?: boolean;
+  // only with excludedFromStatistics: reference-only, balances untouched
+  excludedFromBalance?: boolean;
 }
 
 export type UpdateExpenseCategory = CreateExpenseCategory;
@@ -23,6 +25,8 @@ export interface CreateIncomeCategory {
   title: string;
   parentId: IncomeCategoryID | null;
   excludedFromStatistics?: boolean;
+  // only with excludedFromStatistics: reference-only, balances untouched
+  excludedFromBalance?: boolean;
 }
 
 export type UpdateIncomeCategory = CreateIncomeCategory;

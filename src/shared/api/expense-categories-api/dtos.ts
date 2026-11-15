@@ -4,6 +4,7 @@ export interface CreateExpenseCategoryDTO {
   title: string;
   parentId: ExpenseCategoryID | null;
   excludedFromStatistics?: boolean;
+  excludedFromBalance?: boolean;
 }
 
 export type UpdateExpenseCategoryDTO = CreateExpenseCategoryDTO;

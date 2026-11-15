@@ -7,15 +7,19 @@ import { Toggle } from "@shared/ui/toggles";
 export interface CreateExpenseCategoryFormData {
   title: string;
   excludedFromStatistics: boolean;
+  excludedFromBalance: boolean;
 }
 
 export const createExpenseCategoryFormSchema = z.object({
   title: z.string().nonempty(),
   excludedFromStatistics: z.boolean(),
+  excludedFromBalance: z.boolean(),
 });
 
 export const CreateExpenseCategoryFormFieldset = () => {
-  const { register, control } = useFormContext<CreateExpenseCategoryFormData>();
+  const { register, control, watch } =
+    useFormContext<CreateExpenseCategoryFormData>();
+  const excludedFromStatistics = watch("excludedFromStatistics");
   return (
     <div className="flex flex-col gap-6">
       <Input
@@ -41,6 +45,25 @@ export const CreateExpenseCategoryFormFieldset = () => {
           </div>
         )}
       />
+      {excludedFromStatistics && (
+        <Controller
+          control={control}
+          name="excludedFromBalance"
+          render={({ field: { value, onChange } }) => (
+            <div className="flex items-center justify-between gap-3 px-4">
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-text">
+                  Справочная категория
+                </span>
+                <span className="text-xs text-subtext0">
+                  Записи не двигают и балансы счетов
+                </span>
+              </div>
+              <Toggle checked={value ?? false} onChange={onChange} />
+            </div>
+          )}
+        />
+      )}
     </div>
   );
 };

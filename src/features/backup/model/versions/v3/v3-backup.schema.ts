@@ -59,6 +59,7 @@ const v3ExpenseCategorySchema = z.object({
   parentId: z.string().uuid().nullable(),
   createdAt: z.number().int().positive(),
   excludedFromStatistics: z.boolean().optional(),
+  excludedFromBalance: z.boolean().optional(),
 });
 
 const v3ExpenseSchema = z.object({
@@ -79,6 +80,7 @@ const v3IncomeCategorySchema = z.object({
   parentId: z.string().uuid().nullable(),
   createdAt: z.number().int().positive(),
   excludedFromStatistics: z.boolean().optional(),
+  excludedFromBalance: z.boolean().optional(),
 });
 
 const v3IncomeSchema = z.object({

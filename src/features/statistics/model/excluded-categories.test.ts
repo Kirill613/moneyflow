@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { TransactionType } from "@entities/transaction";
 
 import { getCurrenciesStatistics, getTopExcludedCategory } from "./statistics";
+import { isTransactionExcludedFromBalance } from "./use-balance-transactions";
 
 const accounts = {
   card: { currencyId: "byn" },
@@ -133,5 +134,45 @@ describe("ignoreExclusions option", () => {
     expect(
       byn.expenseRootCategories.categories.map((c) => c.categoryId),
     ).toEqual(["dad", "car", "home"]);
+  });
+});
+
+describe("isTransactionExcludedFromBalance", () => {
+  const cats = {
+    exchange: { id: "exchange", parentId: null, excludedFromStatistics: true },
+    ref: {
+      id: "ref",
+      parentId: null,
+      excludedFromStatistics: true,
+      excludedFromBalance: true,
+    },
+    normal: { id: "normal", parentId: null },
+  };
+
+  it("keeps stats-only hidden categories in balances", () => {
+    expect(
+      isTransactionExcludedFromBalance(cats, { categoryId: "exchange" }),
+    ).toBe(false);
+  });
+
+  it("skips reference-only categories", () => {
+    expect(isTransactionExcludedFromBalance(cats, { categoryId: "ref" })).toBe(
+      true,
+    );
+  });
+
+  it("transaction override keeps it counted everywhere", () => {
+    expect(
+      isTransactionExcludedFromBalance(cats, {
+        categoryId: "ref",
+        excludedFromStatistics: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("normal categories always count", () => {
+    expect(
+      isTransactionExcludedFromBalance(cats, { categoryId: "normal" }),
+    ).toBe(false);
   });
 });

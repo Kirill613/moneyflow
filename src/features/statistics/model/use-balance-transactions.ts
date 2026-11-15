@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import {
   useExpenseCategoriesStore,
   useIncomeCategoriesStore,
+  getTopExcludedCategory,
 } from "@entities/category";
 import {
   Transaction,
@@ -10,13 +11,24 @@ import {
   useTransactions,
 } from "@entities/transaction";
 
-import {
-  CategoriesForStatistics,
-  isTransactionExcludedFromStatistics,
-} from "./statistics";
+import { CategoriesForStatistics } from "./statistics";
 
-// Hidden transactions are reference-only: they move neither statistics nor
-// account balances. Transfers always count.
+// A transaction skips balances only when its hiding category is marked
+// excludedFromBalance (reference-only). A category hidden from statistics
+// alone (e.g. currency exchanges) still moves balances, and a transaction
+// whose own flag is false counts everywhere. Transfers always count.
+export const isTransactionExcludedFromBalance = (
+  categories: CategoriesForStatistics &
+    Record<string, { excludedFromBalance?: boolean }>,
+  transaction: { categoryId: string; excludedFromStatistics?: boolean },
+): boolean => {
+  if (transaction.excludedFromStatistics === false) {
+    return false;
+  }
+  const top = getTopExcludedCategory(categories, transaction.categoryId);
+  return top !== null && top.excludedFromBalance === true;
+};
+
 export const excludeHiddenTransactions = (
   transactions: Transaction[],
   expenseCategories: CategoriesForStatistics,
@@ -24,16 +36,10 @@ export const excludeHiddenTransactions = (
 ): Transaction[] =>
   transactions.filter((transaction) => {
     if (transaction.type === TransactionType.expense) {
-      return !isTransactionExcludedFromStatistics(
-        expenseCategories,
-        transaction,
-      );
+      return !isTransactionExcludedFromBalance(expenseCategories, transaction);
     }
     if (transaction.type === TransactionType.income) {
-      return !isTransactionExcludedFromStatistics(
-        incomeCategories,
-        transaction,
-      );
+      return !isTransactionExcludedFromBalance(incomeCategories, transaction);
     }
     return true;
   });

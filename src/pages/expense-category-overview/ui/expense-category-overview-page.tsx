@@ -84,6 +84,7 @@ export const ExpenseCategoryOverviewPage = () => {
     defaultValues: category && {
       title: category.title,
       excludedFromStatistics: category.excludedFromStatistics ?? false,
+      excludedFromBalance: category.excludedFromBalance ?? false,
     },
     resolver: zodResolver(createExpenseCategoryFormSchema),
   });
@@ -94,12 +95,17 @@ export const ExpenseCategoryOverviewPage = () => {
       reset({
         title: category.title,
         excludedFromStatistics: category.excludedFromStatistics ?? false,
+        excludedFromBalance: category.excludedFromBalance ?? false,
       });
     }
   }, [id, category, reset]);
 
   const beforeDelete = () => {
-    reset({ title: "", excludedFromStatistics: false });
+    reset({
+      title: "",
+      excludedFromStatistics: false,
+      excludedFromBalance: false,
+    });
   };
 
   return (
