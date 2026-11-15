@@ -7,7 +7,7 @@ import { PageLayout } from "@shared/ui/layouts";
 
 export const CreateTransferPage = () => {
   return (
-    <PageLayout className="min-h-full pb-4">
+    <PageLayout className="h-[100dvh] overflow-y-auto pb-6">
       <Header title="Перевод / обмен" backButton />
       <CreateTransferForm
         className="flex-1"

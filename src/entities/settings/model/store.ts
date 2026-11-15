@@ -7,6 +7,7 @@ import {
   AppearanceSettings,
   NotificationsSettings,
   Settings,
+  StatisticsSettings,
   UITextSize,
 } from "./models";
 
@@ -14,6 +15,7 @@ interface SettingsStoreState extends Settings {
   fetchSettings(): Promise<void>;
   setNotificationsSettings(settings: NotificationsSettings): Promise<void>;
   setAppearanceSettings(settings: AppearanceSettings): Promise<void>;
+  setStatisticsSettings(settings: StatisticsSettings): Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsStoreState>()(
@@ -28,6 +30,9 @@ export const useSettingsStore = create<SettingsStoreState>()(
     appearance: {
       textSize: UITextSize.large,
     },
+    statistics: {
+      includeHiddenCategories: false,
+    },
     async fetchSettings() {
       set(await settingsApi.getSettings());
     },
@@ -41,6 +46,10 @@ export const useSettingsStore = create<SettingsStoreState>()(
     async setAppearanceSettings(settings) {
       await settingsApi.setSettings({ ...get(), appearance: settings });
       set({ appearance: settings });
+    },
+    async setStatisticsSettings(settings) {
+      await settingsApi.setSettings({ ...get(), statistics: settings });
+      set({ statistics: settings });
     },
   })),
 );

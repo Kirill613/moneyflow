@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 
@@ -33,11 +33,11 @@ import {
   useCurrenciesStore,
 } from "@entities/currency";
 import { useCurrencyConversionStore } from "@entities/currency-conversion";
+import { useSettingsStore } from "@entities/settings";
 import { TransactionType, useTransactions } from "@entities/transaction";
 
 import { Divider } from "@shared/ui/dividers";
 import { PageLayout } from "@shared/ui/layouts";
-import { Toggle } from "@shared/ui/toggles";
 
 import { useStatisticsFiltersStore } from "../model/store";
 
@@ -75,15 +75,10 @@ export const StatisticsPage = () => {
       ),
     [transactions, filters, accounts, expenseCategories, incomeCategories],
   );
-  const [includeHidden, setIncludeHidden] = useState(false);
-  const hasHiddenCategories = useMemo(
-    () =>
-      [
-        ...Object.values(expenseCategories),
-        ...Object.values(incomeCategories),
-      ].some((category) => category.excludedFromStatistics),
-    [expenseCategories, incomeCategories],
-  );
+  const { statistics: statisticsSettings } = useSettingsStore((state) => ({
+    statistics: state.statistics,
+  }));
+  const includeHidden = statisticsSettings?.includeHiddenCategories ?? false;
   const { currencyCodes, rates } = useCurrencyConversionStore();
   const bynPerUnit = useMemo(() => rates?.bynPerUnit ?? {}, [rates]);
   const targetCurrencyId = useMemo(
@@ -302,14 +297,6 @@ export const StatisticsPage = () => {
           />
         }
       />
-      {hasHiddenCategories && (
-        <div className="flex items-center justify-between gap-3 px-1">
-          <span className="text-sm font-bold text-text">
-            Учитывать скрытые категории
-          </span>
-          <Toggle checked={includeHidden} onChange={setIncludeHidden} />
-        </div>
-      )}
       {filteredTransactions.length ? (
         <main className="flex flex-col gap-4">
           {currenciesOrder.map((currencyId) => {

@@ -19,7 +19,12 @@ export interface AppearanceSettingsDTO {
   textSize: UITextSizeDTO;
 }
 
+export interface StatisticsSettingsDTO {
+  includeHiddenCategories: boolean;
+}
+
 export interface SettingsDTO {
   notifications: NotificationsSettingsDTO;
   appearance: AppearanceSettingsDTO;
+  statistics?: StatisticsSettingsDTO;
 }

@@ -126,6 +126,7 @@ const v3AppearanceSettingsSchema = z.object({
 const v3SettingsSchema = z.object({
   notifications: v3NotificationsSettingsSchema,
   appearance: v3AppearanceSettingsSchema,
+  statistics: z.object({ includeHiddenCategories: z.boolean() }).optional(),
 });
 
 const v3BackupSchema = z.object({

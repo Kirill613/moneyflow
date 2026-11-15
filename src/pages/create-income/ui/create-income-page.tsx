@@ -9,7 +9,7 @@ import { PageLayout } from "@shared/ui/layouts";
 export const CreateIncomePage = () => {
   const debtPersonSuggestions = useDebtPersonSuggestions();
   return (
-    <PageLayout className="h-full">
+    <PageLayout className="h-[100dvh] overflow-y-auto pb-6">
       <Header title="Add Income" backButton />
       <CreateIncomeForm
         className="flex-1"

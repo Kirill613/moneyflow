@@ -12,6 +12,7 @@ import {
   AboutUsSettingCardGroup,
   CategoriesSettingCard,
   SettingCardGroup,
+  StatisticsSettingCardGroup,
 } from "@entities/settings";
 
 import { PageLayout } from "@shared/ui/layouts";
@@ -26,6 +27,7 @@ export const SettingsPage = () => {
           <CurrencyCodesSettingCard />
           <CurrencyRatesSettingCard />
         </SettingCardGroup>
+        <StatisticsSettingCardGroup />
         <BackupSettingCardGroup />
         <NotificationsSettingCardGroup />
         <AppearanceSettingCardGroup />

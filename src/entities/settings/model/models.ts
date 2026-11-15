@@ -19,7 +19,12 @@ export interface AppearanceSettings {
   textSize: UITextSize;
 }
 
+export interface StatisticsSettings {
+  includeHiddenCategories: boolean;
+}
+
 export interface Settings {
   notifications: NotificationsSettings;
   appearance: AppearanceSettings;
+  statistics?: StatisticsSettings;
 }
